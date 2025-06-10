@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "papaparse": "^5.5.3"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/papaparse": "^5.3.16"
+  }
+}
