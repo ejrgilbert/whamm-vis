@@ -1,14 +1,38 @@
 import * as parseCSV from './parseCSV'
+import * as ct from './coloredText'
 
 /**
- * Prints out a a nicely formated br monitor
- * @param {string} filePath 
+ * Returns a nicely formated monitor
+ * @param filePath 
  */
-export function wizVisFromFile(filePath: string): string{
+export function wizVisFromFile(filePath: string, colored: boolean = false): string{
     let data = parseCSV.parseFromFile(filePath)
+    if (colored) {
+        return coloredWizVis(data)
+    } else {
+        return wizVis(data)
+    }
+}
+
+/**
+ * Returns a nicely formated monitor
+ * @param csv 
+ * @returns 
+ */
+export function wizVisFromString(csv:string): string{
+    let data = parseCSV.parseFromString(csv)
+    return wizVis(data)
+}
+
+/**
+ * Formats the csv object
+ * @param csv The CSV to format
+ * @returns A string of the csv formatted
+ */
+function wizVis(csv: parseCSV.CSVRow[]): string{
     // Organizes the data by fid then by pc
     let fidToPcToLine: Map<number, Map<number, parseCSV.CSVRow[]>> = new Map()
-    for (let line of data) {
+    for (let line of csv) {
         if (!fidToPcToLine.get(line["fid"])){
             fidToPcToLine.set(line["fid"], new Map())
         }
@@ -31,13 +55,58 @@ export function wizVisFromFile(filePath: string): string{
             let lines = innerMap.get(pc)
             if (!lines || lines?.length === 0) {continue}
             let opcode = lines[0].probe_id.split(":")[2] // Gets the opcode (after #_wasm:opcode: and before :mode)
-            outputString += `\t +${pc} ${opcode}:\t[`
+            outputString += "\t +" + pc + " " + opcode + ":\t["
             outputString += lines.map(obj => obj['value(s)']).join(", ")
             outputString += "]\n"
         }
     }
     return outputString
-}   
+}
+
+/**
+ * Formats the csv object with colors
+ * @param csv The CSV to format
+ * @returns A string of the csv formatted
+ */
+function coloredWizVis(csv: parseCSV.CSVRow[]): string{
+    // Organizes the data by fid then by pc
+    let fidToPcToLine: Map<number, Map<number, parseCSV.CSVRow[]>> = new Map()
+    for (let line of csv) {
+        if (!fidToPcToLine.get(line["fid"])){
+            fidToPcToLine.set(line["fid"], new Map())
+        }
+        if (!fidToPcToLine.get(line["fid"])?.get(line["pc"])) {
+            fidToPcToLine.get(line["fid"])?.set(line["pc"], [])
+        }
+        fidToPcToLine.get(line["fid"])?.get(line["pc"])?.push(line)
+        
+    }
+
+    let outputString = ""
+
+    let fids = fidToPcToLine.keys()
+    for (let fid of Array.from(fids)) {
+        outputString += `func #${fid}:\n` // The function label
+        let innerMap = fidToPcToLine.get(fid)
+        if (!innerMap) {continue}
+        let pcs = innerMap.keys()
+        for (let pc of Array.from(pcs)) {
+            let lines = innerMap.get(pc)
+            if (!lines || lines?.length === 0) {continue}
+            let opcode = lines[0].probe_id.split(":")[2] // Gets the opcode (after #_wasm:opcode: and before :mode)
+            outputString += "\t " + ct.cyan("+" + pc) + " " + ct.green(opcode) + ":\t[" // The program counter and opcode
+            
+            let values = lines.map(obj => obj["value(s)"] ?
+                 ct.magenta(obj.name  + ": " + obj['value(s)']) :
+                 ct.grey(obj.name  + ": " + obj['value(s)'])) // The data
+            
+            outputString += values.join(", ") // The data
+            
+            outputString += "]\n"
+        }
+    }
+    return outputString
+}
 
 // Allows calling from CLI
 if (require.main === module) {
@@ -46,12 +115,8 @@ if (require.main === module) {
         console.error("Usage: node parseCSV.js <csv-file-path>");
         process.exit(1);
     }
-    const data = wizVisFromFile(filePath);
+    const data = wizVisFromFile(filePath, true);
     console.log(data);
 }
 
 
-// func "main":
-//   +13 br_if:     [1, 0]
-// func "call_target":
-//    +5 br_if:     [1, 0]

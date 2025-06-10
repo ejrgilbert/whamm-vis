@@ -37,13 +37,19 @@ export function parseFromString(CSV: string): CSVRow[] {
     });
     let data = result.data as any[]
 
-    // Splits fid and pc, does leave fid:pc if needed/wanted
     for (let i = 0; i < data.length; i++) {
+        // Splits fid and pc, does leave fid:pc if needed/wanted
         let fidPc = data[i]["fid:pc"]
         let splitFidPc = fidPc.split(":")
         data[i]["fid"] = parseInt(splitFidPc[0])
         data[i]["pc"] = parseInt(splitFidPc[1])
+        // Turns value(s) into a number if it can be
+        let value = data[i]["value(s)"]
+        if(!Number.isNaN(parseInt(value))){ // If value is a number
+            data[i]["value(s)"] = parseInt(value)
+        }
     }
+
 
     return data;
 }
