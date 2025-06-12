@@ -35,8 +35,8 @@ function parseFromString(CSV) {
         }
         // Turns value(s) into a number if it can be
         var value = data[i]["value(s)"];
-        if (!Number.isNaN(parseInt(value))) { // If value is a number
-            data[i]["value(s)"] = parseInt(value);
+        if (!Number.isNaN(parseFloat(value))) { // If value is a number
+            data[i]["value(s)"] = parseFloat(value);
         }
     }
     return data;

@@ -9,7 +9,7 @@ export interface CSVRow {
     "wasm_type": string;
     "script_id": string;
     "probe_id": string;
-    "value(s)": string;
+    "value(s)": any;
     fid: number;         // added by your code
     pc: number;          // added by your code
 }
@@ -46,8 +46,8 @@ export function parseFromString(CSV: string): CSVRow[] {
         }
         // Turns value(s) into a number if it can be
         let value = data[i]["value(s)"]
-        if(!Number.isNaN(parseInt(value))){ // If value is a number
-            data[i]["value(s)"] = parseInt(value)
+        if(!Number.isNaN(parseFloat(value))){ // If value is a number
+            data[i]["value(s)"] = parseFloat(value)
         }
     }
 
