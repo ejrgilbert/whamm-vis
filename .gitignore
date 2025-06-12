@@ -1,2 +1,6 @@
 __pycache__/
-typescript/node_modules
+**/node_modules
+./whamm-visualizer/out
+./whamm-visualizer/dist
+./whamm-visualizer/.vscode-test/
+./whamm-visualizer/*.vsix
