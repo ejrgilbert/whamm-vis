@@ -5,10 +5,10 @@ import * as ct from './coloredText'
  * Returns a nicely formated monitor
  * @param filePath 
  */
-export function wizVisFromFile(filePath: string, colored: boolean = false): string{
+export function wizVisFromFile(filePath: string, colored: boolean = false, greyZero:boolean = false): string{
     let data = parseCSV.parseFromFile(filePath)
     if (colored) {
-        return coloredWizVis(data)
+        return coloredWizVis(data, greyZero)
     } else {
         return wizVis(data)
     }
@@ -19,9 +19,13 @@ export function wizVisFromFile(filePath: string, colored: boolean = false): stri
  * @param csv 
  * @returns 
  */
-export function wizVisFromString(csv:string): string{
+export function wizVisFromString(csv:string, colored: boolean = false, greyZero:boolean = false): string{
     let data = parseCSV.parseFromString(csv)
-    return wizVis(data)
+    if (colored) {
+        return coloredWizVis(data, greyZero)
+    } else {
+        return wizVis(data)
+    }
 }
 
 /**
@@ -68,7 +72,7 @@ function wizVis(csv: parseCSV.CSVRow[]): string{
  * @param csv The CSV to format
  * @returns A string of the csv formatted
  */
-function coloredWizVis(csv: parseCSV.CSVRow[]): string{
+function coloredWizVis(csv: parseCSV.CSVRow[], greyZero: boolean = false): string{
     // Organizes the data by fid then by pc
     let fidToPcToLine: Map<number, Map<number, parseCSV.CSVRow[]>> = new Map()
     for (let line of csv) {
@@ -96,12 +100,18 @@ function coloredWizVis(csv: parseCSV.CSVRow[]): string{
             let opcode = lines[0].probe_id.split(":")[2] // Gets the opcode (after #_wasm:opcode: and before :mode)
             outputString += "\t " + ct.cyan("+" + pc) + " " + ct.green(opcode) + ":\t[" // The program counter and opcode
             
-            let values = lines.map(obj => obj["value(s)"] ?
-                 ct.magenta(obj.name  + ": " + obj['value(s)']) :
-                 ct.grey(obj.name  + ": " + obj['value(s)'])) // The data
+            if (greyZero) {
+                let values = lines.map(obj => obj["value(s)"] ?
+                    ct.magenta(obj.name  + ": " + obj['value(s)']) :
+                    ct.grey(obj.name  + ": " + obj['value(s)'])) // The data
+                    
+                    outputString += values.join(", ") // The data
+            } else {
+                let values = lines.map(obj => ct.magenta(obj.name  + ": " + obj['value(s)'])) // The data
             
-            outputString += values.join(", ") // The data
-            
+                outputString += values.join(", ") // The data
+            }
+                    
             outputString += "]\n"
         }
     }
@@ -110,13 +120,26 @@ function coloredWizVis(csv: parseCSV.CSVRow[]): string{
 
 // Allows calling from CLI
 if (require.main === module) {
-    const filePath = process.argv[2];
-    if (!filePath) {
-        console.error("Usage: node parseCSV.js <csv-file-path>");
-        process.exit(1);
+    if (process.argv.length === 3){
+        const filePath = process.argv[2];
+        if (!filePath) {
+            console.error("Usage: node parseCSV.js <csv-file-path>");
+            process.exit(1);
+        }
+        const data = wizVisFromFile(filePath, true);
+        console.log(data);
+    } else if (process.argv.length === 2) {
+        let input = '';
+        process.stdin.setEncoding('utf8');
+        process.stdin.on('data', chunk => input += chunk);
+        process.stdin.on('end', () => {
+            const csv = input.split("============================= REPORT CSV FLUSH ================================\n")[1]
+            const data = wizVisFromString(csv, true);
+            console.log(data);
+        });
+        
+        
     }
-    const data = wizVisFromFile(filePath, true);
-    console.log(data);
 }
 
 

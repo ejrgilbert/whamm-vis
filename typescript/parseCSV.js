@@ -27,10 +27,12 @@ function parseFromString(CSV) {
     var data = result.data;
     for (var i = 0; i < data.length; i++) {
         // Splits fid and pc, does leave fid:pc if needed/wanted
-        var fidPc = data[i]["fid:pc"];
-        var splitFidPc = fidPc.split(":");
-        data[i]["fid"] = parseInt(splitFidPc[0]);
-        data[i]["pc"] = parseInt(splitFidPc[1]);
+        if (data[i]["fid:pc"]) {
+            var fidPc = data[i]["fid:pc"];
+            var splitFidPc = fidPc.split(":");
+            data[i]["fid"] = parseInt(splitFidPc[0]);
+            data[i]["pc"] = parseInt(splitFidPc[1]);
+        }
         // Turns value(s) into a number if it can be
         var value = data[i]["value(s)"];
         if (!Number.isNaN(parseInt(value))) { // If value is a number

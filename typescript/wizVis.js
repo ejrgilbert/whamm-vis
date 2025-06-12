@@ -8,11 +8,12 @@ var ct = require("./coloredText");
  * Returns a nicely formated monitor
  * @param filePath
  */
-function wizVisFromFile(filePath, colored) {
+function wizVisFromFile(filePath, colored, greyZero) {
     if (colored === void 0) { colored = false; }
+    if (greyZero === void 0) { greyZero = false; }
     var data = parseCSV.parseFromFile(filePath);
     if (colored) {
-        return coloredWizVis(data);
+        return coloredWizVis(data, greyZero);
     }
     else {
         return wizVis(data);
@@ -23,9 +24,16 @@ function wizVisFromFile(filePath, colored) {
  * @param csv
  * @returns
  */
-function wizVisFromString(csv) {
+function wizVisFromString(csv, colored, greyZero) {
+    if (colored === void 0) { colored = false; }
+    if (greyZero === void 0) { greyZero = false; }
     var data = parseCSV.parseFromString(csv);
-    return wizVis(data);
+    if (colored) {
+        return coloredWizVis(data, greyZero);
+    }
+    else {
+        return wizVis(data);
+    }
 }
 /**
  * Formats the csv object
@@ -75,8 +83,9 @@ function wizVis(csv) {
  * @param csv The CSV to format
  * @returns A string of the csv formatted
  */
-function coloredWizVis(csv) {
+function coloredWizVis(csv, greyZero) {
     var _a, _b, _c, _d;
+    if (greyZero === void 0) { greyZero = false; }
     // Organizes the data by fid then by pc
     var fidToPcToLine = new Map();
     for (var _i = 0, csv_2 = csv; _i < csv_2.length; _i++) {
@@ -107,10 +116,16 @@ function coloredWizVis(csv) {
             }
             var opcode = lines[0].probe_id.split(":")[2]; // Gets the opcode (after #_wasm:opcode: and before :mode)
             outputString += "\t " + ct.cyan("+" + pc) + " " + ct.green(opcode) + ":\t["; // The program counter and opcode
-            var values = lines.map(function (obj) { return obj["value(s)"] ?
-                ct.magenta(obj.name + ": " + obj['value(s)']) :
-                ct.grey(obj.name + ": " + obj['value(s)']); }); // The data
-            outputString += values.join(", "); // The data
+            if (greyZero) {
+                var values = lines.map(function (obj) { return obj["value(s)"] ?
+                    ct.magenta(obj.name + ": " + obj['value(s)']) :
+                    ct.grey(obj.name + ": " + obj['value(s)']); }); // The data
+                outputString += values.join(", "); // The data
+            }
+            else {
+                var values = lines.map(function (obj) { return ct.magenta(obj.name + ": " + obj['value(s)']); }); // The data
+                outputString += values.join(", "); // The data
+            }
             outputString += "]\n";
         }
     }
@@ -118,11 +133,23 @@ function coloredWizVis(csv) {
 }
 // Allows calling from CLI
 if (require.main === module) {
-    var filePath = process.argv[2];
-    if (!filePath) {
-        console.error("Usage: node parseCSV.js <csv-file-path>");
-        process.exit(1);
+    if (process.argv.length === 3) {
+        var filePath = process.argv[2];
+        if (!filePath) {
+            console.error("Usage: node parseCSV.js <csv-file-path>");
+            process.exit(1);
+        }
+        var data = wizVisFromFile(filePath, true);
+        console.log(data);
     }
-    var data = wizVisFromFile(filePath, true);
-    console.log(data);
+    else if (process.argv.length === 2) {
+        var input_1 = '';
+        process.stdin.setEncoding('utf8');
+        process.stdin.on('data', function (chunk) { return input_1 += chunk; });
+        process.stdin.on('end', function () {
+            var csv = input_1.split("============================= REPORT CSV FLUSH ================================\n")[1];
+            var data = wizVisFromString(csv, true);
+            console.log(data);
+        });
+    }
 }

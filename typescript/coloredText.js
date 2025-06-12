@@ -10,6 +10,7 @@ exports.magenta = magenta;
 exports.cyan = cyan;
 exports.white = white;
 exports.grey = grey;
+exports.printColorCodes = printColorCodes;
 function coloredText(text, colorCode) {
     return "\u001B[38;5;".concat(colorCode, "m").concat(String(text), "\u001B[0m");
 }
@@ -40,7 +41,9 @@ function white(text) {
 function grey(text) {
     return coloredText(text, 235);
 }
-for (var i = 0; i < 256; i++) {
-    process.stdout.write(coloredText(i + " ", i));
+function printColorCodes() {
+    for (var i = 0; i < 256; i++) {
+        process.stdout.write(coloredText(i + " ", i));
+    }
+    console.log();
 }
-console.log();

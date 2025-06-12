@@ -40,7 +40,9 @@ export function grey(text: string | number): string {
     return coloredText(text, 235);
 }
 
-for (let i = 0; i < 256 ; i++){
-    process.stdout.write(coloredText(i + " ",i))
+export function printColorCodes(){
+    for (let i = 0; i < 256 ; i++){
+        process.stdout.write(coloredText(i + " ",i))
+    }
+    console.log()
 }
-console.log()
