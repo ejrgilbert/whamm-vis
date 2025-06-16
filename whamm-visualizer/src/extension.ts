@@ -2,11 +2,13 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 
-import * as wizVis from './wizVis';
+import * as textVis from './text_display/textVis';
+import * as pieVis from './pie_chart_display/pieVis';
 
-import AnsiToHtml from 'ansi-to-html';
 
-const ansiToHtml = new AnsiToHtml();
+
+
+
 
 
 // This method is called when your extension is activated
@@ -18,44 +20,13 @@ export function activate(context: vscode.ExtensionContext) {
 	console.log('Congratulations, your extension "whamm-visualizer" is now active!');
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand('whamm-visualizer.opens-std-display', async () => {
-			const editor = vscode.window.activeTextEditor;
-			if (!editor) {
-				vscode.window.showErrorMessage('No active editor found!');
-				return;
-			}
-			const filePath = editor.document.uri.fsPath;
-			// Option 1: Use the file path
-			const output = wizVis.wizVisFromFile(filePath, true);
+		textVis.textDisplay()
+	);
 
-			// Option 2: Use the file content
-			// const csvContent = editor.document.getText();
-			// const output = wizVis.wizVisFromString(csvContent, true);
-
-			const panel = vscode.window.createWebviewPanel(
-				'wizVis',
-				'WizVis Output',
-				vscode.ViewColumn.One,
-				{}
-			);
-			panel.webview.html = getWebviewContent(ansiToHtml.toHtml(output));
-		})
+	context.subscriptions.push(
+		pieVis.pieDisplay(context)
 	);
 }
 
 // This method is called when your extension is deactivated
 export function deactivate() {}
-
-function getWebviewContent(visualization: string) {
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Output</title>
-</head>
-<body>
-    <pre>${visualization}</pre>
-</body>
-</html>`;
-}

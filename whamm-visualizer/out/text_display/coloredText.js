@@ -12,39 +12,39 @@ exports.white = white;
 exports.grey = grey;
 exports.printColorCodes = printColorCodes;
 function coloredText(text, colorCode) {
-    return "\u001B[38;5;".concat(colorCode, "m").concat(String(text), "\u001B[0m");
+    return `\u001b[38;5;${colorCode}m${String(text)}\u001b[0m`;
 }
 function black(text) {
-    return coloredText(text, 0);
+    return coloredText(text, 8);
 }
 function red(text) {
-    return coloredText(text, 1);
+    return coloredText(text, 9);
 }
 function green(text) {
-    return coloredText(text, 2);
+    return coloredText(text, 10);
 }
 function yellow(text) {
-    return coloredText(text, 3);
+    return coloredText(text, 11);
 }
 function blue(text) {
-    return coloredText(text, 4);
+    return coloredText(text, 12);
 }
 function magenta(text) {
-    return coloredText(text, 5);
+    return coloredText(text, 13);
 }
 function cyan(text) {
-    return coloredText(text, 6);
+    return coloredText(text, 14);
 }
 function white(text) {
-    return coloredText(text, 7);
+    return coloredText(text, 15);
 }
 function grey(text) {
     return coloredText(text, 235);
 }
 function printColorCodes() {
-    for (var i = 0; i < 256; i++) {
+    for (let i = 0; i < 256; i++) {
         process.stdout.write(coloredText(i + " ", i));
     }
     console.log();
 }
-printColorCodes();
+//# sourceMappingURL=coloredText.js.map

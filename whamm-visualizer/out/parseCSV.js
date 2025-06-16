@@ -60,11 +60,14 @@ function parseFromString(CSV) {
     let data = result.data;
     for (let i = 0; i < data.length; i++) {
         // Splits fid and pc, does leave fid:pc if needed/wanted
-        if (data[i]["fid:pc"]) {
+        if (data[i]["fid:pc"] && !(data[i]["fid"] && data[i]["pc"])) {
             let fidPc = data[i]["fid:pc"];
             let splitFidPc = fidPc.split(":");
             data[i]["fid"] = parseInt(splitFidPc[0]);
             data[i]["pc"] = parseInt(splitFidPc[1]);
+        }
+        else if (data[i]["fid"] && data[i]["pc"] && !data[i]["fid:pc"]) {
+            data[i]["fid:pc"] = data[i].fid + ":" + data[i].pc;
         }
         // Turns value(s) into a number if it can be
         let value = data[i]["value(s)"];

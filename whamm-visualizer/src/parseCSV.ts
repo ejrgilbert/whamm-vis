@@ -2,16 +2,17 @@ import * as Papa from "papaparse";
 import * as fs from "fs";
 
 export interface CSVRow {
-    id: string;           // or number, if you want to parseInt
-    "id_type": string;
+    id: string;           
+    id_type: string;
     name: string;
-    "whamm_type": string;
-    "wasm_type": string;
-    "script_id": string;
-    "probe_id": string;
+    whamm_type: string;
+    wasm_type: string;
+    script_id: string;
+    probe_id: string;
     "value(s)": any;
-    fid: number;         // added by your code
-    pc: number;          // added by your code
+    fid: number;         
+    pc: number;    
+    "fid:pc": string;      
 }
 
 /**
@@ -38,11 +39,13 @@ export function parseFromString(CSV: string): CSVRow[] {
 
     for (let i = 0; i < data.length; i++) {
         // Splits fid and pc, does leave fid:pc if needed/wanted
-        if (data[i]["fid:pc"]){
+        if (data[i]["fid:pc"] && !(data[i]["fid"] && data[i]["pc"])){
             let fidPc = data[i]["fid:pc"];
             let splitFidPc = fidPc.split(":");
             data[i]["fid"] = parseInt(splitFidPc[0]);
             data[i]["pc"] = parseInt(splitFidPc[1]);
+        } else if (data[i]["fid"] && data[i]["pc"] && !data[i]["fid:pc"]){
+            data[i]["fid:pc"] = data[i].fid + ":" + data[i].pc;
         }
         // Turns value(s) into a number if it can be
         let value = data[i]["value(s)"];

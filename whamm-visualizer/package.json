@@ -14,9 +14,14 @@
   "contributes": {
     "commands": [
       {
-        "command": "whamm-visualizer.opens-std-display",
+        "command": "whamm-visualizer.open-text-display",
         "category": "Whamm Visualizer",
-        "title": "Open Standard Display"
+        "title": "Open Text Display"
+      },
+      {
+        "command": "whamm-visualizer.open-pie-display",
+        "category": "Whamm Visualizer",
+        "title": "Open Pie Display"
       }
     ]
   },
@@ -42,6 +47,7 @@
   },
   "dependencies": {
     "ansi-to-html": "^0.7.2",
+    "echarts": "^5.6.0",
     "papaparse": "^5.5.3"
   }
 }

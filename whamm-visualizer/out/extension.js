@@ -32,53 +32,20 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.activate = activate;
 exports.deactivate = deactivate;
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
-const vscode = __importStar(require("vscode"));
-const wizVis = __importStar(require("./wizVis"));
-const ansi_to_html_1 = __importDefault(require("ansi-to-html"));
-const ansiToHtml = new ansi_to_html_1.default();
+const textVis = __importStar(require("./text_display/textVis"));
+const pieVis = __importStar(require("./pie_chart_display/pieVis"));
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 function activate(context) {
     // Use the console to output diagnostic information (console.log) and errors (console.error)
     // This line of code will only be executed once when your extension is activated
     console.log('Congratulations, your extension "whamm-visualizer" is now active!');
-    context.subscriptions.push(vscode.commands.registerCommand('whamm-visualizer.opens-std-display', async () => {
-        const editor = vscode.window.activeTextEditor;
-        if (!editor) {
-            vscode.window.showErrorMessage('No active editor found!');
-            return;
-        }
-        const filePath = editor.document.uri.fsPath;
-        // Option 1: Use the file path
-        const output = wizVis.wizVisFromFile(filePath, true);
-        // Option 2: Use the file content
-        // const csvContent = editor.document.getText();
-        // const output = wizVis.wizVisFromString(csvContent, true);
-        const panel = vscode.window.createWebviewPanel('wizVis', 'WizVis Output', vscode.ViewColumn.One, {});
-        panel.webview.html = getWebviewContent(ansiToHtml.toHtml(output));
-    }));
+    context.subscriptions.push(textVis.textDisplay());
+    context.subscriptions.push(pieVis.pieDisplay(context));
 }
 // This method is called when your extension is deactivated
 function deactivate() { }
-function getWebviewContent(visualization) {
-    return `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Output</title>
-</head>
-<body>
-    <pre>${visualization}</pre>
-</body>
-</html>`;
-}
 //# sourceMappingURL=extension.js.map
