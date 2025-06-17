@@ -55,6 +55,9 @@ function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri) {
     // Path to your custom script that initializes and renders the chart
     const chartScriptPath = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'media', 'pieChart.js'));
 
+    // Path to back button
+    const backButtonPath = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'media', 'whamm!_logo.png'));
+
     // Content Security Policy (CSP) to allow only specific scripts
     const nonce = getNonce();
 
@@ -91,6 +94,7 @@ function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri) {
     <body>
         <div id="chart-container"></div>
 
+        <script nonce="${nonce}"> window.BACK_BUTTON_PATH = '${backButtonPath}'; </script>
         <script nonce="${nonce}" src="${echartsJsPath}"></script>
         <script nonce="${nonce}" src="${chartScriptPath}"></script>
     </body>
@@ -146,6 +150,5 @@ function getChartData(csvContent: parseCSV.CSVRow[]): chartData[]{
             output.push(entry);
         }
     }
-    console.log(output);
     return output;
 }
