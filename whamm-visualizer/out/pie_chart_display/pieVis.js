@@ -64,7 +64,10 @@ function pieDisplay(context) {
         // and what pieChart.js expects.
         panel.webview.postMessage({
             command: 'updateChartData',
-            payload: getChartData(parsedCSV)
+            payload: {
+                chartData: getChartData(parsedCSV),
+                //chartsPerRow: 2
+            }
         });
         // Handle messages from the webview
         panel.webview.onDidReceiveMessage(message => {
@@ -73,7 +76,10 @@ function pieDisplay(context) {
                 case 'confirmButtonClicked':
                     panel.webview.postMessage({
                         command: 'updateChartData',
-                        payload: getChartDataByFid(parsedCSV, Number.parseInt(message.payload.selectedFid))
+                        payload: {
+                            chartData: getChartDataByFid(parsedCSV, Number.parseInt(message.payload.selectedFid)),
+                            //chartsPerRow: 2
+                        }
                     });
                     return;
             }
@@ -164,7 +170,8 @@ function getChartData(fidToPcToLine) {
             if (!lines || lines?.length === 0) {
                 continue;
             }
-            let opcode = lines[0].probe_id.split(":")[2]; // Gets the opcode (after #_wasm:opcode: and before :mode)
+            let opcode = lines[0].probe_id;
+            //let opcode = lines[0].probe_id.split(":")[2]; // Gets the opcode (after #_wasm:opcode: and before :mode)
             let entry = {
                 data: [],
                 title: `${opcode} at ${lines[0]['fid:pc']}`,
