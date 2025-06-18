@@ -36,6 +36,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.pieDisplay = pieDisplay;
 const parseCSV = __importStar(require("../parseCSV"));
 const vscode = __importStar(require("vscode"));
+const topBar = __importStar(require("../topBar"));
 function pieDisplay(context) {
     return vscode.commands.registerCommand('whamm-visualizer.open-pie-display', async () => {
         const panel = vscode.window.createWebviewPanel('PieVis', 'PieVis Output', vscode.ViewColumn.One, {
@@ -52,10 +53,10 @@ function pieDisplay(context) {
         }
         const filePath = editor.document.uri.fsPath;
         // Option 1: Use the file path
-        // const output = wizVis.wizVisFromFile(filePath, true);
+        // const parsedCSV = parseCSV.parseFromFile(csvContent);
         // Option 2: Use the file content
         const csvContent = editor.document.getText();
-        const parsedCSV = parseCSV.parseFromString(csvContent);
+        parsedCSV = parseCSV.fidPcMapFromString(csvContent);
         // Set the HTML content for the webview
         panel.webview.html = getWebviewContent(panel.webview, context.extensionUri);
         // Send data to the webview
@@ -65,10 +66,23 @@ function pieDisplay(context) {
             command: 'updateChartData',
             payload: getChartData(parsedCSV)
         });
+        // Handle messages from the webview
+        panel.webview.onDidReceiveMessage(message => {
+            console.log(parsedCSV);
+            switch (message.command) {
+                case 'confirmButtonClicked':
+                    panel.webview.postMessage({
+                        command: 'updateChartData',
+                        payload: getChartDataByFid(parsedCSV, Number.parseInt(message.payload.selectedFid))
+                    });
+                    return;
+            }
+        }, undefined, context.subscriptions);
         // Clean up resources if needed when the panel is closed
         panel.onDidDispose(() => { }, null, context.subscriptions);
     });
 }
+let parsedCSV;
 function getWebviewContent(webview, extensionUri) {
     // Path to the ECharts library within your extension
     const echartsJsPath = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'node_modules', 'echarts', 'dist', 'echarts.min.js'));
@@ -76,6 +90,10 @@ function getWebviewContent(webview, extensionUri) {
     const chartScriptPath = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'media', 'pieChart.js'));
     // Path to back button
     const backButtonPath = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'media', 'whamm!_logo.png'));
+    // Path to the style sheet
+    const styleSheetPath = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'media', 'styles.css'));
+    // Path to the VS Code Webview UI Toolkit script
+    const toolkitUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'node_modules', '@vscode', 'webview-ui-toolkit', 'dist', 'toolkit.js'));
     // Content Security Policy (CSP) to allow only specific scripts
     const nonce = getNonce();
     return `<!DOCTYPE html>
@@ -84,36 +102,42 @@ function getWebviewContent(webview, extensionUri) {
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>ECharts Chart</title>
-        <style>
-            html {
-                width: 100%;
-                height: 100%;
-                margin: 0;
-                padding: 0;
-                overflow: hidden; /* Prevent scrollbars on the html element */
-            }
-            body {
-                width: 100%;
-                height: 100%;
-                margin: 0;
-                padding: 0;
-                overflow-y: auto; /* Allow body to scroll vertically if content overflows */
-                overflow-x: hidden; /* Prevent horizontal scroll on body unless necessary */
-            }
-            #chart-container {
-                width: 100%;
-                margin: 0;
-                padding: 0;
-            }
-        </style>
+        
+        <link rel="stylesheet" href="${styleSheetPath}">
         <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource} https:; script-src 'nonce-${nonce}'; style-src ${webview.cspSource};">
     </head>
     <body>
+        ${topBar.generateTopBar(['Choose an FID:', 'Focus the charts!'], Array.from(parsedCSV.keys()))}
         <div id="chart-container"></div>
 
+        <script nonce="${nonce}"> window.vscode = acquireVsCodeApi(); </script>
         <script nonce="${nonce}"> window.BACK_BUTTON_PATH = '${backButtonPath}'; </script>
+        <script type="module" src="${toolkitUri}" nonce="${nonce}"></script>
         <script nonce="${nonce}" src="${echartsJsPath}"></script>
         <script nonce="${nonce}" src="${chartScriptPath}"></script>
+
+        <script nonce="${nonce}">
+            // Encapsulate to avoid polluting global scope
+            (function() {
+                const confirmButton = document.getElementById('confirm-button');
+                const optionsDropdown = document.getElementById('options-dropdown');
+
+                if (confirmButton) {
+                    confirmButton.addEventListener('click', () => {
+                        let selectedValue = '';
+                        if (optionsDropdown) {
+                            selectedValue = optionsDropdown.value;
+                        }
+                        window.vscode.postMessage({
+                            command: 'confirmButtonClicked',
+                            payload: {
+                                selectedFid: selectedValue
+                            }
+                        });
+                    });
+                }
+            }());
+        </script>
     </body>
     </html>`;
 }
@@ -126,18 +150,7 @@ function getNonce() {
     }
     return text;
 }
-function getChartData(csvContent) {
-    // Organizes the data by fid then by pc
-    let fidToPcToLine = new Map();
-    for (let line of csvContent) {
-        if (!fidToPcToLine.get(line["fid"])) {
-            fidToPcToLine.set(line["fid"], new Map());
-        }
-        if (!fidToPcToLine.get(line["fid"])?.get(line["pc"])) {
-            fidToPcToLine.get(line["fid"])?.set(line["pc"], []);
-        }
-        fidToPcToLine.get(line["fid"])?.get(line["pc"])?.push(line);
-    }
+function getChartData(fidToPcToLine) {
     let output = [];
     let fids = fidToPcToLine.keys();
     for (let fid of Array.from(fids)) {
@@ -155,10 +168,37 @@ function getChartData(csvContent) {
             let entry = {
                 data: [],
                 title: `${opcode} at ${lines[0]['fid:pc']}`,
+                dataGroupId: lines[0]['fid:pc'],
             };
             lines.map(obj => entry.data.push({ value: obj['value(s)'], name: obj.name }));
             output.push(entry);
         }
+    }
+    return output;
+}
+function getChartDataByFid(fidToPcToLine, fid) {
+    let output = [];
+    console.log(fidToPcToLine);
+    console.log(fid);
+    console.log(fidToPcToLine.get(fid));
+    let innerMap = fidToPcToLine.get(fid);
+    if (!innerMap) {
+        return output;
+    }
+    let pcs = innerMap.keys();
+    for (let pc of Array.from(pcs)) {
+        let lines = innerMap.get(pc);
+        if (!lines || lines?.length === 0) {
+            continue;
+        }
+        let opcode = lines[0].probe_id.split(":")[2]; // Gets the opcode (after #_wasm:opcode: and before :mode)
+        let entry = {
+            data: [],
+            title: `${opcode} at ${lines[0]['fid:pc']}`,
+            dataGroupId: lines[0]['fid:pc'],
+        };
+        lines.map(obj => entry.data.push({ value: obj['value(s)'], name: obj.name }));
+        output.push(entry);
     }
     return output;
 }

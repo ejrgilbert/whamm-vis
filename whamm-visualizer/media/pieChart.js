@@ -1,8 +1,7 @@
-// media/chart.js
+// media/pieChart.js
 // This script runs inside the webview
 
 (function () {
-  const vscode = acquireVsCodeApi(); // Get the VS Code API for communication
 
   // Initialize ECharts instance
   const chartDom = document.getElementById('chart-container');
@@ -24,17 +23,21 @@
   window.addEventListener('message', event => {
     const message = event.data; // The JSON data sent from the extension host
 
+    const payload = message.payload;
     switch (message.command) {
       case 'updateChartData':
         myChart.hideLoading();
-        const payload = message.payload;
+        console.log(payload);
         updateChart(payload);
+        cachedOption = myChart.getOption();
         break;
     }
+   
   });
 
   let focused = false;
 
+  // Focuses on target chart when double clicked or returns to base view
   myChart.on('dblclick', function (params) {
     if (!focused){
       cachedOption = myChart.getOption();
@@ -49,8 +52,10 @@
   });
 
   function onBackButton(){
-    updateChart(payloadFromOption(cachedOption));
-    focused = false;
+    if (focused) {
+      updateChart(payloadFromOption(cachedOption));
+      focused = false;
+    }
   }
 
   function generateSeriesObject(){
@@ -94,7 +99,7 @@
     chartDom.style.height = `${requiredHeightPercent}%`;
 
 
-    // Assuming payload contains [{ data: [{name: '', value: number}], title: '', dataGroupId?: number}, ...]
+    // Assuming payload contains [{ data: [{name: '', value: number}], title: '', dataGroupId: number}, ...]
     if (payload.length > 1){ // Multiple charts will be 2 columns, a single one will fill the whole area
       for (let i = 0; i < payload.length; i++){
 
@@ -111,15 +116,10 @@
         chartOption.series[i].data = payload[i].data;
 
         // Sets the positions
-        // TODO: make this with math so it can have more than 2 per row
-        if (i % 2) {
-          chartOption.title[i].left = '55%';
-          chartOption.series[i].center[0] = '75%';
-        } else {
-          chartOption.title[i].left = '5%';
-          chartOption.series[i].center[0] = '25%';
-        }
-        chartOption.title[i].top = (10 + (45 * Math.floor(i/2))) / requiredHeightPercent * 100 + "%";
+        chartOption.title[i].left = 5 + (50 * (i % 2)) + "%";
+        chartOption.series[i].center[0] = 25 + (50 * (i % 2)) + "%";
+
+        chartOption.title[i].top = (10 + (45 * Math.floor(i / 2))) / requiredHeightPercent * 100 + "%";
         chartOption.series[i].center[1] = (30 + (45 * Math.floor(i / 2))) / requiredHeightPercent * 100 + "%";
         chartOption.title[i].textAllign = 'left';
         chartOption.title[i].textVerticalAllign = 'top';
@@ -158,7 +158,7 @@
   }
 
   /**
-   * 
+   * Generates a payload for updateChart from an existing echarts.option
    * @param {echarts.option} option 
    * @returns {[{data: [{name: string, value: number}], title: string, dataGroupId?: number}]}
    */
@@ -176,4 +176,6 @@
     return payload;
 
   }
+
+
 }());

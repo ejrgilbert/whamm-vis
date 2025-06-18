@@ -35,11 +35,13 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.parseFromFile = parseFromFile;
 exports.parseFromString = parseFromString;
+exports.fidPcMapFromFile = fidPcMapFromFile;
+exports.fidPcMapFromString = fidPcMapFromString;
 const Papa = __importStar(require("papaparse"));
 const fs = __importStar(require("fs"));
 /**
  *
- * @param {string}  filePath The path to the file
+ * @param filePath The path to the file
  * @returns An array/dictionary/map of header (string) to data (as a string)
  */
 function parseFromFile(filePath) {
@@ -48,7 +50,7 @@ function parseFromFile(filePath) {
 }
 /**
  *
- * @param {string} CSV The CSV to be parsed
+ * @param CSV The CSV to be parsed
  * @returns An array/dictionary/map of header (string) to data (as a string)
  */
 function parseFromString(CSV) {
@@ -76,6 +78,34 @@ function parseFromString(CSV) {
         }
     }
     return data;
+}
+/**
+ *
+ * @param filePath The path to the file
+ * @returns A Map from fid to a Map from pc to an Array of the data
+ */
+function fidPcMapFromFile(filePath) {
+    let csvFile = fs.readFileSync(filePath, 'utf8');
+    return fidPcMapFromString(csvFile);
+}
+/**
+ *
+ * @param CSV The CSV to be parsed
+ * @returns A Map from fid to a Map from pc to an Array of the data
+ */
+function fidPcMapFromString(CSV) {
+    let csvContent = parseFromString(CSV);
+    let fidToPcToLine = new Map();
+    for (let line of csvContent) {
+        if (!fidToPcToLine.get(line["fid"])) {
+            fidToPcToLine.set(line["fid"], new Map());
+        }
+        if (!fidToPcToLine.get(line["fid"])?.get(line["pc"])) {
+            fidToPcToLine.get(line["fid"])?.set(line["pc"], []);
+        }
+        fidToPcToLine.get(line["fid"])?.get(line["pc"])?.push(line);
+    }
+    return fidToPcToLine;
 }
 // Allows calling from CLI
 if (require.main === module) {

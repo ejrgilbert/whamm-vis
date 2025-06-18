@@ -48,6 +48,7 @@
   "dependencies": {
     "ansi-to-html": "^0.7.2",
     "echarts": "^5.6.0",
-    "papaparse": "^5.5.3"
+    "papaparse": "^5.5.3",
+    "@vscode/webview-ui-toolkit": "1.2.2"
   }
 }

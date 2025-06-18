@@ -17,7 +17,7 @@ export interface CSVRow {
 
 /**
  *
- * @param {string}  filePath The path to the file
+ * @param filePath The path to the file
  * @returns An array/dictionary/map of header (string) to data (as a string)
  */
 export function parseFromFile(filePath: string): CSVRow[] {
@@ -26,7 +26,7 @@ export function parseFromFile(filePath: string): CSVRow[] {
 }
 /**
  *
- * @param {string} CSV The CSV to be parsed
+ * @param CSV The CSV to be parsed
  * @returns An array/dictionary/map of header (string) to data (as a string)
  */
 export function parseFromString(CSV: string): CSVRow[] {
@@ -56,6 +56,39 @@ export function parseFromString(CSV: string): CSVRow[] {
 
 
     return data;
+}
+
+/**
+ * 
+ * @param filePath The path to the file
+ * @returns A Map from fid to a Map from pc to an Array of the data
+ */
+export function fidPcMapFromFile(filePath: string): Map<number, Map<number, CSVRow[]>> {
+    let csvFile = fs.readFileSync(filePath, 'utf8');
+    return fidPcMapFromString(csvFile);
+}
+
+/**
+ * 
+ * @param CSV The CSV to be parsed
+ * @returns A Map from fid to a Map from pc to an Array of the data
+ */
+export function fidPcMapFromString(CSV: string): Map<number, Map<number, CSVRow[]>> {
+    let csvContent = parseFromString(CSV);
+    
+    let fidToPcToLine: Map<number, Map<number, CSVRow[]>> = new Map();
+    for (let line of csvContent) {
+        if (!fidToPcToLine.get(line["fid"])){
+            fidToPcToLine.set(line["fid"], new Map());
+        }
+        if (!fidToPcToLine.get(line["fid"])?.get(line["pc"])) {
+            fidToPcToLine.get(line["fid"])?.set(line["pc"], []);
+        }
+        fidToPcToLine.get(line["fid"])?.get(line["pc"])?.push(line);
+        
+    }
+
+    return fidToPcToLine;
 }
 
 // Allows calling from CLI
