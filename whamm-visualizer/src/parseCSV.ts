@@ -63,9 +63,9 @@ export function parseFromString(CSV: string): CSVRow[] {
  * @param filePath The path to the file
  * @returns A Map from fid to a Map from pc to an Array of the data
  */
-export function fidPcMapFromFile(filePath: string): Map<number, Map<number, CSVRow[]>> {
+export function fidPcMapFromFile(filePath: string): Map<number, Map<number, Map<string, CSVRow[]>>> {
     let csvFile = fs.readFileSync(filePath, 'utf8');
-    return fidPcMapFromString(csvFile);
+    return fidPcPidMapFromString(csvFile);
 }
 
 /**
@@ -73,22 +73,25 @@ export function fidPcMapFromFile(filePath: string): Map<number, Map<number, CSVR
  * @param CSV The CSV to be parsed
  * @returns A Map from fid to a Map from pc to an Array of the data
  */
-export function fidPcMapFromString(CSV: string): Map<number, Map<number, CSVRow[]>> {
+export function fidPcPidMapFromString(CSV: string): Map<number, Map<number, Map<string, CSVRow[]>>> {
     let csvContent = parseFromString(CSV);
     
-    let fidToPcToLine: Map<number, Map<number, CSVRow[]>> = new Map();
+    let fidToPcToPidToLine: Map<number, Map<number, Map<string, CSVRow[]>>> = new Map();
     for (let line of csvContent) {
-        if (!fidToPcToLine.get(line["fid"])){
-            fidToPcToLine.set(line["fid"], new Map());
+        if (!fidToPcToPidToLine.get(line["fid"])){
+            fidToPcToPidToLine.set(line["fid"], new Map());
         }
-        if (!fidToPcToLine.get(line["fid"])?.get(line["pc"])) {
-            fidToPcToLine.get(line["fid"])?.set(line["pc"], []);
+        if (!fidToPcToPidToLine.get(line["fid"])?.get(line["pc"])) {
+            fidToPcToPidToLine.get(line["fid"])?.set(line["pc"], new Map());
         }
-        fidToPcToLine.get(line["fid"])?.get(line["pc"])?.push(line);
+        if (!fidToPcToPidToLine.get(line["fid"])?.get(line["pc"])?.get(line["probe_id"])) {
+            fidToPcToPidToLine.get(line["fid"])?.get(line["pc"])?.set(line["probe_id"], []);
+        }
+        fidToPcToPidToLine.get(line["fid"])?.get(line["pc"])?.get(line["probe_id"])?.push(line);
         
     }
 
-    return fidToPcToLine;
+    return fidToPcToPidToLine;
 }
 
 // Allows calling from CLI

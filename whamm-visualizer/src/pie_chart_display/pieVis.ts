@@ -33,7 +33,7 @@ export function pieDisplay(context: vscode.ExtensionContext): vscode.Disposable{
 
         // Option 2: Use the file content
         const csvContent = editor.document.getText();
-        parsedCSV = parseCSV.fidPcMapFromString(csvContent);
+        parsedCSV = parseCSV.fidPcPidMapFromString(csvContent);
 
         // Set the HTML content for the webview
         panel.webview.html = getWebviewContent(panel.webview, context.extensionUri);
@@ -75,7 +75,7 @@ export function pieDisplay(context: vscode.ExtensionContext): vscode.Disposable{
 	});
 }
 
-let parsedCSV: Map<number, Map<number, parseCSV.CSVRow[]>>;
+let parsedCSV: Map<number, Map<number, Map<string, parseCSV.CSVRow[]>>>;
 
 function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri) {
     // Path to the ECharts library within your extension
@@ -160,18 +160,52 @@ type chartData = {
     dataGroupId: string;
 }
 
-function getChartData(fidToPcToLine: Map<number, Map<number, parseCSV.CSVRow[]>>): chartData[]{
+function getChartData(fidToPcToPidToLine: Map<number, Map<number, Map<string, parseCSV.CSVRow[]>>>): chartData[]{
 
 
     let output: chartData[] = [];
 
-    let fids = fidToPcToLine.keys();
+    let fids = fidToPcToPidToLine.keys();
     for (let fid of Array.from(fids)) {
-        let innerMap = fidToPcToLine.get(fid);
+        let innerMap = fidToPcToPidToLine.get(fid);
         if (!innerMap) {continue;}
         let pcs = innerMap.keys();
         for (let pc of Array.from(pcs)) {
-            let lines = innerMap.get(pc);
+            let innerInnerMap = fidToPcToPidToLine.get(fid)?.get(pc);
+            if (!innerInnerMap) {continue;}
+            let pids = innerInnerMap.keys();
+            for (let pid of Array.from(pids)){
+                let lines = innerInnerMap.get(pid);
+                if (!lines || lines?.length === 0) {continue;}
+                let opcode = lines[0].probe_id;
+                //let opcode = lines[0].probe_id.split(":")[2]; // Gets the opcode (after #_wasm:opcode: and before :mode)
+                let entry:chartData = {
+                    data: [],
+                    title: `${opcode} at ${lines[0]['fid:pc']}`,
+                    dataGroupId: lines[0]['fid:pc'],
+                };
+                lines.map(obj => entry.data.push({value: obj['value(s)'], name: obj.name}));
+                output.push(entry);
+            }
+        }
+    }
+    return output;
+}
+
+function getChartDataByFid(fidToPcToPidToLine: Map<number, Map<number, Map<string, parseCSV.CSVRow[]>>>, fid: number): chartData[]{
+    let output: chartData[] = [];
+    console.log(fidToPcToPidToLine);
+    console.log(fid);
+    console.log(fidToPcToPidToLine.get(fid));
+    let innerMap = fidToPcToPidToLine.get(fid);
+    if (!innerMap) {return output;}
+    let pcs = innerMap.keys();
+    for (let pc of Array.from(pcs)) {
+        let innerInnerMap = fidToPcToPidToLine.get(fid)?.get(pc);
+        if (!innerInnerMap) {continue;}
+        let pids = innerInnerMap.keys();
+        for (let pid of Array.from(pids)){
+            let lines = innerInnerMap.get(pid);
             if (!lines || lines?.length === 0) {continue;}
             let opcode = lines[0].probe_id;
             //let opcode = lines[0].probe_id.split(":")[2]; // Gets the opcode (after #_wasm:opcode: and before :mode)
@@ -183,30 +217,6 @@ function getChartData(fidToPcToLine: Map<number, Map<number, parseCSV.CSVRow[]>>
             lines.map(obj => entry.data.push({value: obj['value(s)'], name: obj.name}));
             output.push(entry);
         }
-    }
-    return output;
-}
-
-function getChartDataByFid(fidToPcToLine: Map<number, Map<number, parseCSV.CSVRow[]>>, fid: number): chartData[]{
-    let output: chartData[] = [];
-    console.log(fidToPcToLine);
-    console.log(fid);
-    console.log(fidToPcToLine.get(fid));
-    let innerMap = fidToPcToLine.get(fid);
-    if (!innerMap) {return output;}
-    let pcs = innerMap.keys();
-    for (let pc of Array.from(pcs)) {
-        let lines = innerMap.get(pc);
-        if (!lines || lines?.length === 0) {continue;}
-        let opcode = lines[0].probe_id.split(":")[2]; // Gets the opcode (after #_wasm:opcode: and before :mode)
-        let entry:chartData = {
-            data: [],
-            title: `${opcode} at ${lines[0]['fid:pc']}`,
-            dataGroupId: lines[0]['fid:pc'],
-        };
-        lines.map(obj => entry.data.push({value: obj['value(s)'], name: obj.name}));
-        output.push(entry);
-    
-    }
+        }
     return output;
 }
