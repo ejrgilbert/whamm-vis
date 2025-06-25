@@ -6,13 +6,12 @@ export function generateTopBar(labels: [string, string], options: string[]|numbe
         <div id="top-bar">
             <div class="dropdown-container">
                 <label for="options-dropdown">${labels[0]}</label>
-                <vscode-dropdown id="options-dropdown">
-                    ${optionsHTML}
-                </vscode-dropdown>
-            </div>
-            <div class="dropdown-container">
-                <label for="confirm-button">${labels[1]}</label>
-                <vscode-button id="confirm-button">Confirm</vscode-button>
+                <div class="dropdown-controls">
+                    <vscode-dropdown id="options-dropdown">
+                        ${optionsHTML}
+                    </vscode-dropdown>
+                    <vscode-button id="confirm-button">Filter</vscode-button>
+                </div>
             </div>
         </div>`;
 }

@@ -1,16 +1,15 @@
-import * as parseCSV from '../parseCSV';
-import * as cDFuncs from '../chartDataFunctions';
+import * as parseCSV from './parseCSV';
+import * as cDFuncs from './chartDataFunctions';
 import * as vscode from 'vscode';
 
 
-import * as topBar from '../topBar';
 
 
 export function pieDisplay(context: vscode.ExtensionContext): vscode.Disposable{
-	return vscode.commands.registerCommand('whamm-visualizer.open-pie-display', async () => {
+	return vscode.commands.registerCommand('whamm-visualizer.open-side-by-side-pie', async () => {
         const panel = vscode.window.createWebviewPanel(
-            'PieVis',
-            'PieVis Output',
+            'Side by Side Pie',
+            'Side by Side Pie Output',
             vscode.ViewColumn.One,
             {
                 // Enable scripts in the webview
@@ -110,38 +109,20 @@ function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri) {
         <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource} https:; script-src 'nonce-${nonce}'; style-src ${webview.cspSource} 'unsafe-inline';">
     </head>
     <body>
-        ${topBar.generateTopBar(['Choose an FID:', 'Focus the charts!'], Array.from(parsedCSV.keys()))}
-        <div class="scrollable-div">
-            <div id="chart-container"></div>
+        <div style="display: flex; flex-direction: row; height: 100%; box-sizing: border-box; min-width: 0; flex-wrap: nowrap;">
+            <div id="left-panel" class="scrollable-div" style="width: 50%; height: 100%; padding: 0; margin: 0; box-sizing: border-box; border-right: 1px solid var(--vscode-editor-foreground); min-width: 0">
+                <p>Hello world</p>
+            </div>
+            <div class="scrollable-div" style="width: 50%; box-sizing: border-box; min-width: 0;">
+                <div id="chart-container"></div>
+            </div>
         </div>
+
         <script nonce="${nonce}"> window.vscode = acquireVsCodeApi(); </script>
         <script nonce="${nonce}"> window.BACK_BUTTON_PATH = '${backButtonPath}'; </script>
         <script type="module" src="${toolkitUri}" nonce="${nonce}"></script>
         <script nonce="${nonce}" src="${echartsJsPath}"></script>
         <script nonce="${nonce}" src="${chartScriptPath}"></script>
-
-        <script nonce="${nonce}">
-            // Encapsulate to avoid polluting global scope
-            (function() {
-                const confirmButton = document.getElementById('confirm-button');
-                const optionsDropdown = document.getElementById('options-dropdown');
-
-                if (confirmButton) {
-                    confirmButton.addEventListener('click', () => {
-                        let selectedValue = '';
-                        if (optionsDropdown) {
-                            selectedValue = optionsDropdown.value;
-                        }
-                        window.vscode.postMessage({
-                            command: 'confirmButtonClicked',
-                            payload: {
-                                selectedFid: selectedValue
-                            }
-                        });
-                    });
-                }
-            }());
-        </script>
     </body>
     </html>`;
 }
@@ -154,6 +135,76 @@ function getNonce() {
         text += possible.charAt(Math.floor(Math.random() * possible.length));
     }
     return text;
+}
+
+type chartData = {
+    data: { value: number; name: string }[];
+    title: string;
+    subtitle: string;
+    dataGroupId: string;
+}
+
+function getChartData(fidToPcToPidToLine: Map<number, Map<number, Map<string, parseCSV.CSVRow[]>>>): chartData[]{
+
+
+    let output: chartData[] = [];
+
+    let fids = fidToPcToPidToLine.keys();
+    for (let fid of Array.from(fids)) {
+        let innerMap = fidToPcToPidToLine.get(fid);
+        if (!innerMap) {continue;}
+        let pcs = innerMap.keys();
+        for (let pc of Array.from(pcs)) {
+            let innerInnerMap = fidToPcToPidToLine.get(fid)?.get(pc);
+            if (!innerInnerMap) {continue;}
+            let pids = innerInnerMap.keys();
+            for (let pid of Array.from(pids)){
+                let lines = innerInnerMap.get(pid);
+                if (!lines || lines?.length === 0) {continue;}
+                let opcode = lines[0].probe_id;
+                //let opcode = lines[0].probe_id.split(":")[2]; // Gets the opcode (after #_wasm:opcode: and before :mode)
+                let entry:chartData = {
+                    data: [],
+                    title: opcode,
+                    subtitle: lines[0]['fid:pc'],
+                    dataGroupId: opcode + lines[0]['fid:pc'],
+            };
+                lines.map(obj => entry.data.push({value: obj['value(s)'], name: obj.name}));
+                output.push(entry);
+            }
+        }
+    }
+    return output;
+}
+
+function getChartDataByFid(fidToPcToPidToLine: Map<number, Map<number, Map<string, parseCSV.CSVRow[]>>>, fid: number): chartData[]{
+    let output: chartData[] = [];
+    console.log(fidToPcToPidToLine);
+    console.log(fid);
+    console.log(fidToPcToPidToLine.get(fid));
+    let innerMap = fidToPcToPidToLine.get(fid);
+    if (!innerMap) {return output;}
+    let pcs = innerMap.keys();
+    for (let pc of Array.from(pcs)) {
+        let innerInnerMap = fidToPcToPidToLine.get(fid)?.get(pc);
+        if (!innerInnerMap) {continue;}
+        let pids = innerInnerMap.keys();
+        for (let pid of Array.from(pids)){
+            let lines = innerInnerMap.get(pid);
+            if (!lines || lines?.length === 0) {continue;}
+            let opcode = lines[0].probe_id;
+            //let opcode = lines[0].probe_id.split(":")[2]; // Gets the opcode (after #_wasm:opcode: and before :mode)
+            let entry:chartData = {
+                data: [],
+                title: opcode,
+                subtitle: lines[0]['fid:pc'],
+                dataGroupId: opcode + lines[0]['fid:pc'],
+            };
+            lines.map(obj => entry.data.push({value: obj['value(s)'], name: obj.name}));
+            output.push(entry);
+        }
+        }
+    return output;
 }
 
 function dataMapping(lines: parseCSV.CSVRow[]): cDFuncs.chartData{

@@ -4,7 +4,7 @@ import * as vscode from 'vscode';
 
 import * as textVis from './text_display/textVis';
 import * as pieVis from './pie_chart_display/pieVis';
-
+import * as sideBySidePie from './sideBySidePie';
 
 
 
@@ -25,6 +25,10 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(
 		pieVis.pieDisplay(context)
+	);
+
+	context.subscriptions.push(
+		sideBySidePie.pieDisplay(context)
 	);
 }
 

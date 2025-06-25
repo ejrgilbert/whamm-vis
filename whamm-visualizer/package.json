@@ -19,6 +19,11 @@
         "title": "Open Text Display"
       },
       {
+        "command": "whamm-visualizer.open-side-by-side-pie",
+        "category": "Whamm Visualizer",
+        "title": "Open Side By Side Pie Display"
+      },
+      {
         "command": "whamm-visualizer.open-pie-display",
         "category": "Whamm Visualizer",
         "title": "Open Pie Display"
