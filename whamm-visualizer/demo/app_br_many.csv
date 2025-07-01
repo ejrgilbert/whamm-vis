@@ -1,0 +1,55 @@
+id, id_type, name, whamm_type, wasm_type, script_id, fid:pc, probe_id, value(s)
+4, memaddr, taken, i32, i32, script0, 1:5, 1_wasm:opcode:br_if:before, 20
+4, memaddr, taken 2, i32, i32, script0, 1:5, 1_wasm:opcode:br_if:before, 20
+4, memaddr, taken 3, i32, i32, script0, 1:5, 1_wasm:opcode:br_if:before, 20
+4, memaddr, taken 4, i32, i32, script0, 1:5, 1_wasm:opcode:br_if:before, 20
+4, memaddr, taken 5, i32, i32, script0, 1:5, 1_wasm:opcode:br_if:before, 20
+4, memaddr, taken 12, i32, i32, script0, 1:5, 1_wasm:opcode:br_if:before, 20
+4, memaddr, taken 13, i32, i32, script0, 1:5, 1_wasm:opcode:br_if:before, 20
+4, memaddr, taken 14, i32, i32, script0, 1:5, 1_wasm:opcode:br_if:before, 20
+4, memaddr, taken 15, i32, i32, script0, 1:5, 1_wasm:opcode:br_if:before, 20
+4, memaddr, taken 22, i32, i32, script0, 1:5, 1_wasm:opcode:br_if:before, 20
+4, memaddr, taken 23, i32, i32, script0, 1:5, 1_wasm:opcode:br_if:before, 20
+4, memaddr, taken 24, i32, i32, script0, 1:5, 1_wasm:opcode:br_if:before, 20
+4, memaddr, taken 25, i32, i32, script0, 1:5, 1_wasm:opcode:br_if:before, 20
+4, memaddr, taken 212, i32, i32, script0, 1:5, 1_wasm:opcode:br_if:before, 20
+4, memaddr, taken 213, i32, i32, script0, 1:5, 1_wasm:opcode:br_if:before, 20
+4, memaddr, taken 214, i32, i32, script0, 1:5, 1_wasm:opcode:br_if:before, 20
+4, memaddr, taken 215, i32, i32, script0, 1:5, 1_wasm:opcode:br_if:before, 20
+31, memaddr, not_taken, i32, i32, script0, 1:5, 1_wasm:opcode:br_if:before, 11
+4, memaddr, taken, i32, i32, script0, 1:5, 1_wasm:opcode:br_if:after, 20
+31, memaddr, not_taken, i32, i32, script0, 1:5, 1_wasm:opcode:br_if:after, 11
+4, memaddr, taken, i32, i32, script0, 1:6, 1_wasm:opcode:br_if:after, 20
+31, memaddr, not_taken, i32, i32, script0, 1:6, 1_wasm:opcode:br_if:after, 11
+58, memaddr, taken, i32, i32, script0, 2:2, 1_wasm:opcode:br_if:before, 10
+85, memaddr, not_taken, i32, i32, script0, 2:2, 1_wasm:opcode:br_if:before, 15
+4, memaddr, taken, i32, i32, script0, 1:15, 1_wasm:opcode:br_if:before, 20
+31, memaddr, not_taken, i32, i32, script0, 1:15, 1_wasm:opcode:br_if:before, 11
+58, memaddr, taken, i32, i32, script0, 2:12, 1_wasm:opcode:br_if:before, 10
+85, memaddr, not_taken, i32, i32, script0, 2:12, 1_wasm:opcode:br_if:before, 1
+54, memaddr, taken, i32, i32, script0, 1:35, 1_wasm:opcode:br_if:before, 20
+31, memaddr, not_taken, i32, i32, script0, 1:35, 1_wasm:opcode:br_if:before, 11
+58, memaddr, taken, i32, i32, script0, 2:32, 1_wasm:opcode:br_if:before, 10
+85, memaddr, not_taken, i32, i32, script0, 2:32, 1_wasm:opcode:br_if:before, 15
+4, memaddr, taken, i32, i32, script0, 1:135, 1_wasm:opcode:br_if:before, 20
+31, memaddr, not_taken, i32, i32, script0, 1:135, 1_wasm:opcode:br_if:before, 11
+58, memaddr, taken, i32, i32, script0, 2:132, 1_wasm:opcode:br_if:before, 10
+85, memaddr, not_taken, i32, i32, script0, 2:132, 1_wasm:opcode:br_if:before, 15
+4, memaddr, taken, i32, i32, script0, 1:25, 1_wasm:opcode:br_if:before, 20
+31, memaddr, not_taken, i32, i32, script0, 1:25, 1_wasm:opcode:br_if:before, 11
+58, memaddr, taken, i32, i32, script0, 2:22, 1_wasm:opcode:br_if:before, 10
+85, memaddr, not_taken, i32, i32, script0, 2:22, 1_wasm:opcode:br_if:before, 15
+4, memaddr, taken, i32, i32, script0, 1:125, 1_wasm:opcode:br_if:before, 20
+31, memaddr, not_taken, i32, i32, script0, 1:125, 1_wasm:opcode:br_if:before, 11
+58, memaddr, taken, i32, i32, script0, 2:122, 1_wasm:opcode:br_if:before, 10
+85, memaddr, not_taken, i32, i32, script0, 2:122, 1_wasm:opcode:br_if:before, 1
+54, memaddr, taken, i32, i32, script0, 1:352, 1_wasm:opcode:br_if:before, 20
+31, memaddr, not_taken, i32, i32, script0, 1:352, 1_wasm:opcode:br_if:before, 11
+58, memaddr, taken, i32, i32, script0, 2:322, 1_wasm:opcode:br_if:before, 10
+85, memaddr, not_taken, i32, i32, script0, 2:322, 1_wasm:opcode:br_if:before, 15
+4, memaddr, taken, i32, i32, script0, 1:1352, 1_wasm:opcode:br_if:before, 20
+31, memaddr, not_taken, i32, i32, script0, 1:1352, 1_wasm:opcode:br_if:before, 11
+58, memaddr, taken, i32, i32, script0, 2:1322, 1_wasm:opcode:br_if:before, 10
+85, memaddr, not_taken, i32, i32, script0, 2:1322, 1_wasm:opcode:br_if:before, 15
+112, memaddr, taken, i32, i32, script0, 3:3, 0_wasm:opcode:br:before, 1
+139, memaddr, taken, i32, i32, script0, 4:3, 0_wasm:opcode:br:before, 1
