@@ -3,7 +3,7 @@ import * as cDFuncs from '../chartDataFunctions';
 import * as vscode from 'vscode';
 
 
-import * as topBar from '../topBar';
+import * as topBar from '../top_bars/topBar';
 
 
 export function pieDisplay(context: vscode.ExtensionContext): vscode.Disposable{

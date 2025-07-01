@@ -3,7 +3,7 @@ export function generateTopBar(labels: [string, string], options: string[]|numbe
     
     
     return `
-        <div id="top-bar">
+        <div class="top-bar">
             <div class="dropdown-container">
                 <label for="options-dropdown">${labels[0]}</label>
                 <div class="dropdown-controls">

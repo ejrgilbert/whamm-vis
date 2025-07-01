@@ -19,7 +19,7 @@ body {
     margin: 0;
     padding: 0;
 }
-#top-bar {
+.top-bar {
     width: 100%;
     height: 5%;
     margin: 10px;
@@ -28,7 +28,7 @@ body {
     flex-direction: row;
     align-items: flex-start;
     gap: 10px;
-
+    border-bottom: 1px solid var(--vscode-editor-foreground);
 }
 .dropdown-container {
   box-sizing: border-box;

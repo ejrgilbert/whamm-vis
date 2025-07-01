@@ -51,9 +51,13 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
+    "@codemirror/lang-wast": "^6.0.2",
+    "@rollup/plugin-node-resolve": "^16.0.1",
+    "@vscode/webview-ui-toolkit": "1.2.2",
     "ansi-to-html": "^0.7.2",
+    "codemirror": "^6.0.2",
     "echarts": "^5.6.0",
     "papaparse": "^5.5.3",
-    "@vscode/webview-ui-toolkit": "1.2.2"
+    "rollup": "^4.44.1"
   }
 }

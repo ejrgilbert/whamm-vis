@@ -4,7 +4,6 @@ import * as vscode from 'vscode';
 
 
 
-
 export function pieDisplay(context: vscode.ExtensionContext): vscode.Disposable{
 	return vscode.commands.registerCommand('whamm-visualizer.open-side-by-side-pie', async () => {
         const panel = vscode.window.createWebviewPanel(
@@ -38,6 +37,13 @@ export function pieDisplay(context: vscode.ExtensionContext): vscode.Disposable{
         // Set the HTML content for the webview
         panel.webview.html = getWebviewContent(panel.webview, context.extensionUri);
 
+        // Send the initial file name to the webview
+        const initialFileName = filePath.split('/').pop() || filePath.split('\\').pop();
+        panel.webview.postMessage({
+            command: 'updateCsvFileName',
+            payload: { fileName: initialFileName }
+        });
+
 		// Send data to the webview
         // Adjust the payload structure based on what wizVis.wizVisFromString actually returns
         // and what pieChart.js expects.
@@ -51,17 +57,68 @@ export function pieDisplay(context: vscode.ExtensionContext): vscode.Disposable{
 
         // Handle messages from the webview
         panel.webview.onDidReceiveMessage(
-            message => {
-                console.log(parsedCSV);
+            async message => {
+                let options: vscode.OpenDialogOptions;
+                let fileUri;
                 switch (message.command) {
-                    case 'confirmButtonClicked':
-                        panel.webview.postMessage({
-                            command: 'updateChartData',
-                            payload: {
-                                chartData: cDFuncs.getChartDataByFid(parsedCSV, Number.parseInt(message.payload.selectedFid), dataMapping),
-                                //chartsPerRow: 2
+                    case 'chooseCsv':
+                        options = {
+                            canSelectMany: false,
+                            openLabel: 'Select CSV',
+                            filters: {
+                                'CSV files': ['csv']
                             }
-                        });
+                        };
+
+                        fileUri = await vscode.window.showOpenDialog(options);
+
+                        if (fileUri && fileUri[0]) {
+                            const newCsvContent = await vscode.workspace.fs.readFile(fileUri[0]);
+                            const newParsedCSV = parseCSV.fidPcPidMapFromString(newCsvContent.toString());
+                            
+                            // Update the global parsedCSV for this panel instance
+                            parsedCSV = newParsedCSV;
+
+                            // Extract the file name from the URI
+                            const fileName = fileUri[0].fsPath.split('/').pop() || fileUri[0].fsPath.split('\\').pop();
+                            panel.webview.postMessage({
+                                command: 'updateCsvFileName',
+                                payload: { fileName: fileName }
+                            });
+
+                            panel.webview.postMessage({
+                                command: 'updateChartData',
+                                payload: {
+                                    chartData: cDFuncs.getChartData(parsedCSV, dataMapping),
+                                }
+                            });
+                        }
+                        return;
+                    case 'chooseWat':
+                        options = {
+                            canSelectMany: false,
+                            openLabel: 'Select Wat',
+                            filters: {
+                                'Wat files': ['wat']
+                            }
+                        };
+
+                        fileUri = await vscode.window.showOpenDialog(options);
+
+                        if (fileUri && fileUri[0]) {
+                            const newWatContentArray = await vscode.workspace.fs.readFile(fileUri[0]);
+                            const newWatContent = newWatContentArray.toString();
+                            // Extract the file name from the URI
+                            const fileName = fileUri[0].fsPath.split('/').pop() || fileUri[0].fsPath.split('\\').pop();
+                            panel.webview.postMessage({
+                                command: 'updateWatFileName',
+                                payload: { fileName: fileName }
+                            });
+                            panel.webview.postMessage({
+                                command: 'updateWatContent',
+                                payload: {newCode: newWatContent}
+                            });
+                        }
                         return;
                 }
             },
@@ -81,7 +138,7 @@ function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri) {
     // Path to the ECharts library within your extension
     const echartsJsPath = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'node_modules', 'echarts', 'dist', 'echarts.min.js'));
 
-    // Path to your custom script that initializes and renders the chart
+    // Path to the script that initializes and renders the chart
     const chartScriptPath = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'media', 'pieChart.js'));
 
     // Path to back button
@@ -92,6 +149,9 @@ function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri) {
 
     // Path to the VS Code Webview UI Toolkit script
     const toolkitUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'node_modules', '@vscode', 'webview-ui-toolkit', 'dist', 'toolkit.js'));
+
+    // Path to the code display script
+        const codeDisplayScriptPath = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'media', 'codeDisplay.js'));
 
 
     // Content Security Policy (CSP) to allow only specific scripts
@@ -104,16 +164,24 @@ function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri) {
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>ECharts Chart</title>
-        
-        <link rel="stylesheet" href="${styleSheetPath}">
+                <link rel="stylesheet" href="${styleSheetPath}">
         <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource} https:; script-src 'nonce-${nonce}'; style-src ${webview.cspSource} 'unsafe-inline';">
     </head>
     <body>
         <div style="display: flex; flex-direction: row; height: 100%; box-sizing: border-box; min-width: 0; flex-wrap: nowrap;">
             <div id="left-panel" class="scrollable-div" style="width: 50%; height: 100%; padding: 0; margin: 0; box-sizing: border-box; border-right: 1px solid var(--vscode-editor-foreground); min-width: 0">
-                <p>Hello world</p>
+                <div class='top-bar'>
+                    <vscode-button id="wat-chooser">Choose WAT</vscode-button>
+                    <p id="wat-file-name-display">WAT File: No file chosen</p>
+                </div>
+                <div id="wat-editor-container"></div>
+                <p>Left Panel Content</p>
             </div>
             <div class="scrollable-div" style="width: 50%; box-sizing: border-box; min-width: 0;">
+                <div class='top-bar'>
+                    <vscode-button id="csv-chooser">Choose CSV</vscode-button>
+                    <p id="csv-file-name-display">File name: No file chosen</p>
+                </div>
                 <div id="chart-container"></div>
             </div>
         </div>
@@ -123,6 +191,47 @@ function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri) {
         <script type="module" src="${toolkitUri}" nonce="${nonce}"></script>
         <script nonce="${nonce}" src="${echartsJsPath}"></script>
         <script nonce="${nonce}" src="${chartScriptPath}"></script>
+        <script type="module" nonce="${nonce}" src="${codeDisplayScriptPath}"></script>
+
+        <script nonce="${nonce}">
+            // Encapsulate to avoid polluting global scope
+            (function() {
+                const csvChooserButton = document.getElementById('csv-chooser');
+                const csvFileNameDisplay = document.getElementById('csv-file-name-display');
+                const watChooserButton = document.getElementById('wat-chooser');
+                const watFileNameDisplay = document.getElementById('wat-file-name-display');
+
+                if (csvChooserButton) {
+                    csvChooserButton.addEventListener('click', () => {
+                        window.vscode.postMessage({
+                            command: 'chooseCsv',
+                        });
+                    });
+                }
+
+                if (watChooserButton) {
+                    watChooserButton.addEventListener('click', () => {
+                        window.vscode.postMessage({
+                            command: 'chooseWat',
+                        });
+                    });
+                }
+
+                // Listen for messages from the extension
+                window.addEventListener('message', event => {
+                    const message = event.data; // The JSON data that the extension sent
+                    if (message.command === 'updateCsvFileName' && csvFileNameDisplay) {
+                        csvFileNameDisplay.textContent = \`File name: \${message.payload.fileName}\`;
+                    } else if (message.command === 'updateWatContent') {
+                        const watEditor = document.getElementById('wat-editor');
+                        if (watEditor) { watEditor.value = message.payload.content; }
+                        // editor.setValue(message.payload.content); // If you have a CodeMirror instance
+                    } else if (message.command === 'updateWatFileName' && watFileNameDisplay) {
+                        watFileNameDisplay.textContent = \`File name: \${message.payload.fileName}\`;
+                    }
+                });
+            }());
+        </script>
     </body>
     </html>`;
 }
@@ -135,76 +244,6 @@ function getNonce() {
         text += possible.charAt(Math.floor(Math.random() * possible.length));
     }
     return text;
-}
-
-type chartData = {
-    data: { value: number; name: string }[];
-    title: string;
-    subtitle: string;
-    dataGroupId: string;
-}
-
-function getChartData(fidToPcToPidToLine: Map<number, Map<number, Map<string, parseCSV.CSVRow[]>>>): chartData[]{
-
-
-    let output: chartData[] = [];
-
-    let fids = fidToPcToPidToLine.keys();
-    for (let fid of Array.from(fids)) {
-        let innerMap = fidToPcToPidToLine.get(fid);
-        if (!innerMap) {continue;}
-        let pcs = innerMap.keys();
-        for (let pc of Array.from(pcs)) {
-            let innerInnerMap = fidToPcToPidToLine.get(fid)?.get(pc);
-            if (!innerInnerMap) {continue;}
-            let pids = innerInnerMap.keys();
-            for (let pid of Array.from(pids)){
-                let lines = innerInnerMap.get(pid);
-                if (!lines || lines?.length === 0) {continue;}
-                let opcode = lines[0].probe_id;
-                //let opcode = lines[0].probe_id.split(":")[2]; // Gets the opcode (after #_wasm:opcode: and before :mode)
-                let entry:chartData = {
-                    data: [],
-                    title: opcode,
-                    subtitle: lines[0]['fid:pc'],
-                    dataGroupId: opcode + lines[0]['fid:pc'],
-            };
-                lines.map(obj => entry.data.push({value: obj['value(s)'], name: obj.name}));
-                output.push(entry);
-            }
-        }
-    }
-    return output;
-}
-
-function getChartDataByFid(fidToPcToPidToLine: Map<number, Map<number, Map<string, parseCSV.CSVRow[]>>>, fid: number): chartData[]{
-    let output: chartData[] = [];
-    console.log(fidToPcToPidToLine);
-    console.log(fid);
-    console.log(fidToPcToPidToLine.get(fid));
-    let innerMap = fidToPcToPidToLine.get(fid);
-    if (!innerMap) {return output;}
-    let pcs = innerMap.keys();
-    for (let pc of Array.from(pcs)) {
-        let innerInnerMap = fidToPcToPidToLine.get(fid)?.get(pc);
-        if (!innerInnerMap) {continue;}
-        let pids = innerInnerMap.keys();
-        for (let pid of Array.from(pids)){
-            let lines = innerInnerMap.get(pid);
-            if (!lines || lines?.length === 0) {continue;}
-            let opcode = lines[0].probe_id;
-            //let opcode = lines[0].probe_id.split(":")[2]; // Gets the opcode (after #_wasm:opcode: and before :mode)
-            let entry:chartData = {
-                data: [],
-                title: opcode,
-                subtitle: lines[0]['fid:pc'],
-                dataGroupId: opcode + lines[0]['fid:pc'],
-            };
-            lines.map(obj => entry.data.push({value: obj['value(s)'], name: obj.name}));
-            output.push(entry);
-        }
-        }
-    return output;
 }
 
 function dataMapping(lines: parseCSV.CSVRow[]): cDFuncs.chartData{
