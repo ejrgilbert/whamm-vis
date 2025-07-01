@@ -11,11 +11,11 @@
     const myChart = echarts.init(chartDom, 'dark');
 
     // Show a loading animation or placeholder until data arrives
-    myChart.showLoading({ text: 'Loading chart data...' });
+    updateChart([{data: [{name: 'Placeholder', value: 0}], title: 'Placeholder', subtitle: 'Placeholder', dataGroupId: -1}]);
 
     
     // Caches the option field for the echart so when it focuses on one it can go back
-    let cachedOption = {};
+    let cachedOption = myChart.getOption;
     let cachedChartsPerRow = 2;
 
     // Handle resizing to make the chart responsive

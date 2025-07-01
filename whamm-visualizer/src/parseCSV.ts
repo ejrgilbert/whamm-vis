@@ -63,7 +63,7 @@ export function parseFromString(CSV: string): CSVRow[] {
  * @param filePath The path to the file
  * @returns A Map from fid to a Map from pc to an Array of the data
  */
-export function fidPcMapFromFile(filePath: string): Map<number, Map<number, Map<string, CSVRow[]>>> {
+export function fidPcPidMapFromFile(filePath: string): Map<number, Map<number, Map<string, CSVRow[]>>> {
     let csvFile = fs.readFileSync(filePath, 'utf8');
     return fidPcPidMapFromString(csvFile);
 }

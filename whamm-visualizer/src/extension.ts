@@ -28,7 +28,7 @@ export function activate(context: vscode.ExtensionContext) {
 	);
 
 	context.subscriptions.push(
-		sideBySidePie.pieDisplay(context)
+		sideBySidePie.sidebySidePieDisplay(context)
 	);
 }
 

@@ -1,10 +1,11 @@
 import * as parseCSV from './parseCSV';
 import * as cDFuncs from './chartDataFunctions';
+import {FSM} from './wat_parser/fsm';
 import * as vscode from 'vscode';
 
 
 
-export function pieDisplay(context: vscode.ExtensionContext): vscode.Disposable{
+export function sidebySidePieDisplay(context: vscode.ExtensionContext): vscode.Disposable{
 	return vscode.commands.registerCommand('whamm-visualizer.open-side-by-side-pie', async () => {
         const panel = vscode.window.createWebviewPanel(
             'Side by Side Pie',
@@ -25,36 +26,60 @@ export function pieDisplay(context: vscode.ExtensionContext): vscode.Disposable{
             vscode.window.showErrorMessage('No active editor found!');
             return;
         }
-        const filePath = editor.document.uri.fsPath;
-        // Option 1: Use the file path
-        // const parsedCSV = parseCSV.parseFromFile(csvContent);
-
-
-        // Option 2: Use the file content
-        const csvContent = editor.document.getText();
-        parsedCSV = parseCSV.fidPcPidMapFromString(csvContent);
-
         // Set the HTML content for the webview
         panel.webview.html = getWebviewContent(panel.webview, context.extensionUri);
+        let fileUri = editor.document.uri;
+        const filePath = fileUri.fsPath;
+        const fileExtension = filePath.split('.').pop();
+        const fileName = filePath.split('/').pop() || filePath.split('\\').pop();
+        switch (fileExtension){
+            case 'csv':
+                // Option 1: Use the file path
+                parsedCSV = parseCSV.fidPcPidMapFromFile(filePath);
+                // Option 2: Use the file content
+                // const csvContent = editor.document.getText();
+                // parsedCSV = parseCSV.fidPcPidMapFromString(csvContent);
 
-        // Send the initial file name to the webview
-        const initialFileName = filePath.split('/').pop() || filePath.split('\\').pop();
-        panel.webview.postMessage({
-            command: 'updateCsvFileName',
-            payload: { fileName: initialFileName }
-        });
 
-		// Send data to the webview
-        // Adjust the payload structure based on what wizVis.wizVisFromString actually returns
-        // and what pieChart.js expects.
-        panel.webview.postMessage({
-            command: 'updateChartData',
-            payload: {
-                chartData: cDFuncs.getChartData(parsedCSV, dataMapping),
-                //chartsPerRow: 2
-            }
-        });
+                // Send the initial file name to the webview
+                panel.webview.postMessage({
+                    command: 'updateCsvFileName',
+                    payload: { fileName: fileName }
+                });
 
+                // Send data to the webview
+                // Adjust the payload structure based on what wizVis.wizVisFromString actually returns
+                // and what pieChart.js expects.
+                panel.webview.postMessage({
+                    command: 'updateChartData',
+                    payload: {
+                        chartData: cDFuncs.getChartData(parsedCSV, dataMapping),
+                        //chartsPerRow: 2
+                    }
+                });
+                break;
+            case 'wat':
+                const newWatContentArray = await vscode.workspace.fs.readFile(fileUri);
+                const newWatContent = newWatContentArray.toString();
+                panel.webview.postMessage({
+                    command: 'updateWatFileName',
+                    payload: { fileName: fileName }
+                });
+                let watParser = new FSM(newWatContent);
+                watParser.run();
+                let lineToFid = new Map(Array.from(watParser.func_mapping, a => a.reverse() as [number, number]));
+                panel.webview.postMessage({
+                    command: 'updateWatContent',
+                    payload: {
+                        newCode: newWatContent,
+                        lineToFid: lineToFid
+                    }
+                });
+                break;
+            default:
+                vscode.window.showErrorMessage('Please open with a CSV or WAT file');
+                return;
+        }
         // Handle messages from the webview
         panel.webview.onDidReceiveMessage(
             async message => {
@@ -114,9 +139,15 @@ export function pieDisplay(context: vscode.ExtensionContext): vscode.Disposable{
                                 command: 'updateWatFileName',
                                 payload: { fileName: fileName }
                             });
+                            let watParser = new FSM(newWatContent);
+                            watParser.run();
+                            let lineToFid = new Map(Array.from(watParser.func_mapping, a => a.reverse() as [number, number]));
                             panel.webview.postMessage({
                                 command: 'updateWatContent',
-                                payload: {newCode: newWatContent}
+                                payload: {
+                                    newCode: newWatContent,
+                                    lineToFid: lineToFid
+                                }
                             });
                         }
                         return;
@@ -175,7 +206,6 @@ function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri) {
                     <p id="wat-file-name-display">WAT File: No file chosen</p>
                 </div>
                 <div id="wat-editor-container"></div>
-                <p>Left Panel Content</p>
             </div>
             <div class="scrollable-div" style="width: 50%; box-sizing: border-box; min-width: 0;">
                 <div class='top-bar'>
