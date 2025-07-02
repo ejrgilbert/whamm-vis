@@ -26516,4 +26516,4 @@ function wast() {
     return new LanguageSupport(wastLanguage);
 }
 
-export { EditorState, EditorView, HighlightStyle, basicSetup, syntaxHighlighting, tags, wast };
+export { Compartment, EditorState, EditorView, GutterMarker, HighlightStyle, StateEffect, StateField, basicSetup, gutter, lineNumbers, syntaxHighlighting, tags, wast };
