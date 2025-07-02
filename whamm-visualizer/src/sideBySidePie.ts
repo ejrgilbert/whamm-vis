@@ -65,14 +65,12 @@ export function sidebySidePieDisplay(context: vscode.ExtensionContext): vscode.D
                     command: 'updateWatFileName',
                     payload: { fileName: fileName }
                 });
-                let watParser = new FSM(newWatContent);
-                watParser.run();
-                let lineToFid = new Map(Array.from(watParser.func_mapping, a => a.reverse() as [number, number]));
+                const lineToFidPc = organizeLineNumbers(newWatContent);
                 panel.webview.postMessage({
                     command: 'updateWatContent',
                     payload: {
                         newCode: newWatContent,
-                        lineToFid: lineToFid
+                        lineToFidPc: Object.fromEntries(lineToFidPc)
                     }
                 });
                 break;
@@ -139,14 +137,12 @@ export function sidebySidePieDisplay(context: vscode.ExtensionContext): vscode.D
                                 command: 'updateWatFileName',
                                 payload: { fileName: fileName }
                             });
-                            let watParser = new FSM(newWatContent);
-                            watParser.run();
-                            let lineToFid = new Map(Array.from(watParser.func_mapping, a => a.reverse() as [number, number]));
+                            const lineToFidPc = organizeLineNumbers(newWatContent);
                             panel.webview.postMessage({
                                 command: 'updateWatContent',
                                 payload: {
                                     newCode: newWatContent,
-                                    lineToFid: lineToFid
+                                    lineToFidPc: Object.fromEntries(lineToFidPc)
                                 }
                             });
                         }
@@ -286,4 +282,37 @@ function dataMapping(lines: parseCSV.CSVRow[]): cDFuncs.chartData{
     };
     lines.map(obj => entry.data.push({value: obj['value(s)'], name: obj.name}));
     return entry;
+}
+
+
+function organizeLineNumbers(newWatContent: string): Map<number, [number, number]>{
+    let lineCount = newWatContent.split('\n').length; // Use this instead of watParser.current_line_number to inclue trailing lines at the end
+    let watParser = new FSM(newWatContent);
+    watParser.run();
+    let lineToFid = new Map(Array.from(watParser.func_mapping, a => a.reverse() as [number, number]));
+    let output = new Map<number, [number, number]>();
+    let currentFid = -1;
+    let currentPc = -1;
+    for (let line: number = 1; line <= lineCount; line++){
+        if (lineToFid.has(line)){
+            currentFid = lineToFid.get(line)!;
+            currentPc = -1;
+        } else if (currentFid >= 0){ // Alternatively can be done with line - startLine ...
+            const probeLocation = watParser.probe_mapping.get(currentFid);
+            if (probeLocation) {
+                const startLine = probeLocation[0];
+                const end_line = probeLocation[1];
+                if (line >= startLine && line <= end_line) {
+                    currentPc++;
+                } else {
+                    currentPc = -1;
+                    if (line > end_line){
+                        currentFid = -1;
+                    }
+                }
+            }
+        }
+        output.set(line, [currentFid, currentPc]);
+    }
+    return output;
 }

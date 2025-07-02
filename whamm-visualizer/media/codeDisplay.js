@@ -25,14 +25,14 @@ const view = new EditorView({
             // Print the line number (1-based) and its text
             console.log(`Clicked line number: ${line.number}`);
             console.log(`Line content: "${line.text}"`);
-            if (lineToFid) {
-              if (lineToFid.has(line.number)) {
-                console.log(`Function ID: ${lineToFid.get(line.number)}`);
+            if (lineToFidPc) {
+              if (lineToFidPc.has(line.number)) {
+                console.log(`Function ID & Program Counter: ${lineToFidPc.get(line.number)}`);
               } else {
-                console.log('Line number not found in lineToFid map.');
+                console.log(lineToFidPc);
               }
             } else {
-              console.log('no lineToFid');
+              console.log('no lineToFidPc');
             }
           }
         },
@@ -58,7 +58,7 @@ const view = new EditorView({
   }),
 });
 
-let lineToFid;
+let lineToFidPc;
 
 window.addEventListener('message', event => {
       const message = event.data; // The JSON data sent from the extension host
@@ -81,7 +81,7 @@ window.addEventListener('message', event => {
           // When a Map is sent via postMessage, it's converted to a plain Object.
           // We need to convert it back to a Map to use Map methods like .has() and .get().
           // The keys are strings after serialization, so we parse them back to numbers.
-          lineToFid = new Map(Object.entries(payload.lineToFid).map(([key, value]) => [parseInt(key, 10), value]));
+          lineToFidPc = new Map(Object.entries(payload.lineToFidPc).map(([key, value]) => [parseInt(key, 10), value]));
           break;
       }
     
