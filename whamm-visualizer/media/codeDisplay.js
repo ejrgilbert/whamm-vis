@@ -5,6 +5,7 @@ import { EditorView,
   syntaxHighlighting, 
   HighlightStyle, 
   tags as t, 
+  StateEffect,
   GutterMarker,
   gutter } from './codemirrorDependencies.bundle.js';
 
@@ -12,24 +13,32 @@ import { EditorView,
 let doc = ';; This is just a placeholder\n(func $one_plus_one\ni32.const 1\ni32.const 1\ni32.add\ndrop\n)';
 let lineToFidPc = new Map([[1, [-1, -1]], [2, [0, -1]], [3, [0, 1]], [4, [0, 2]], [5, [0, 3]], [6, [0, 4]], [7, [0, -1]]]);
 
-
+let clickedLineNumber = -1;
+const forceGutterRefresh = StateEffect.define();
 
 
 const fidPcLineGutter = gutter({
   lineMarker(view, line) {
     const lineNumber = view.state.doc.lineAt(line.from).number;
-    return new class extends GutterMarker {
-      toDOM() { return document.createTextNode(parseFidPc(lineToFidPc.get(lineNumber), lineNumber)); }
-    };
+    if (lineNumber === clickedLineNumber) {
+      const fidPc = lineToFidPc.get(lineNumber);
+      if (fidPc) {
+        return new class extends GutterMarker {
+          toDOM() { return document.createTextNode(parseFidPc(fidPc)); }
+        };
+      }
+    }
+    return null;
+  },
+  lineMarkerChange: (update) => {
+    return update.transactions.some(tr => tr.effects.some(e => e.is(forceGutterRefresh)));
   },
   initialSpacer: () => new class extends GutterMarker {
-    toDOM() { return document.createTextNode("[99,99]"); }
+    toDOM() { return document.createTextNode(""); }
   }
 });
 
-function parseFidPc(fidPc, lineNumber) {
-  console.log(fidPc);
-  console.log(lineNumber);
+function parseFidPc(fidPc) {
   let fid = fidPc[0];
   let pc = fidPc[1];
   if (fid === -1){
@@ -50,7 +59,7 @@ const clickEvent = EditorView.domEventHandlers({
     if (pos !== null) {
       // Get the line object at that position
       const line = view.state.doc.lineAt(pos);
-
+      clickedLineNumber = line.number;
       // Print the line number (1-based) and its text
       console.log(`Clicked line number: ${line.number}`);
       console.log(`Line content: "${line.text}"`);
@@ -63,7 +72,7 @@ const clickEvent = EditorView.domEventHandlers({
       } else {
         console.log('no lineToFidPc');
       }
-    }
+      view.dispatch({ effects: forceGutterRefresh.of(null) });    }
   },
 });
 
