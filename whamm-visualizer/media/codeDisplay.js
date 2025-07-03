@@ -80,9 +80,26 @@ function deselectLine(view) {
   view.dispatch({ effects: forceGutterRefresh.of(null) });
 }
 
+const clickListener = EditorView.domEventHandlers({
+  click(event, view) {
+    const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
+    if (pos === null) {
+      return;
+    }
+    const line = view.state.doc.lineAt(pos);
+    if (clickedLineNumber !== line.number) {
+      selectLine(view, line);
+    } else {
+      deselectLine(view);
+    }  },
+});
+
 const selectionListener = EditorView.updateListener.of(update => {
   // We are only interested in selection changes.
-  if (update.selectionSet) {
+  if (update.selectionSet && !update.transactions.some(
+    tr => tr.isUserEvent("select.pointer") || 
+    tr.isUserEvent("code.scroll")
+  )) {
     const pos = update.state.selection.main.head;
     const line = update.state.doc.lineAt(pos);
     // Avoid re-triggering for the same line or deselecting on keyboard navigation.
@@ -122,7 +139,8 @@ window.addEventListener('message', event => {
           const line = view.state.doc.line(lineNumber);
           view.dispatch({
             effects: EditorView.scrollIntoView(line.from, { y: "center" }),
-            selection: { anchor: line.from }
+            selection: { anchor: line.from },
+            userEvent: 'code.scroll'
           });
         }
       }
@@ -141,6 +159,7 @@ const view = new EditorView({
       EditorView.editable.of(false),
       EditorView.contentAttributes.of({tabindex: "0"}),
       basicSetup, // Includes line numbers, syntax highlighting, etc.
+      clickListener,
       selectionListener,
       // EditorView.theme({
       //   "&": {

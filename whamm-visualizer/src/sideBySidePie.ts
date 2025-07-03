@@ -178,7 +178,6 @@ export function sidebySidePieDisplay(context: vscode.ExtensionContext): vscode.D
                             command: 'updateChartData',
                             payload: {
                                 chartData: chartData,
-                                //chartsPerRow: 2
                             }
                         });
                         return;
@@ -199,6 +198,14 @@ export function sidebySidePieDisplay(context: vscode.ExtensionContext): vscode.D
                             }
                         });
                         return;
+                    case 'resetChart':
+                        panel.webview.postMessage({
+                            command: 'updateChartData',
+                            payload: {
+                                chartData: cDFuncs.getChartData(parsedCSV, dataMapping),
+                            }
+                        });
+                    return;
                     }
             },
             undefined,
@@ -260,6 +267,7 @@ function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri) {
             <div class="scrollable-div" style="width: 50%; box-sizing: border-box; min-width: 0;">
                 <div class='top-bar'>
                     <vscode-button id="csv-chooser">Choose CSV</vscode-button>
+                    <vscode-button id="chart-reseter">Reset Charts</vscode-button>
                     <p id="csv-file-name-display">File name: No file chosen</p>
                 </div>
                 <div id="chart-container"></div>
@@ -278,9 +286,6 @@ function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri) {
             (function() {
                 const csvChooserButton = document.getElementById('csv-chooser');
                 const csvFileNameDisplay = document.getElementById('csv-file-name-display');
-                const watChooserButton = document.getElementById('wat-chooser');
-                const watFileNameDisplay = document.getElementById('wat-file-name-display');
-
                 if (csvChooserButton) {
                     csvChooserButton.addEventListener('click', () => {
                         window.vscode.postMessage({
@@ -289,10 +294,21 @@ function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri) {
                     });
                 }
 
+                const watChooserButton = document.getElementById('wat-chooser');
+                const watFileNameDisplay = document.getElementById('wat-file-name-display');
                 if (watChooserButton) {
                     watChooserButton.addEventListener('click', () => {
                         window.vscode.postMessage({
                             command: 'chooseWat',
+                        });
+                    });
+                }
+                
+                const chartReseterButton = document.getElementById('chart-reseter');
+                if (chartReseterButton) {
+                    chartReseterButton.addEventListener('click', () => {
+                        window.vscode.postMessage({
+                            command:'resetChart',
                         });
                     });
                 }
@@ -305,7 +321,6 @@ function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri) {
                     } else if (message.command === 'updateWatContent') {
                         const watEditor = document.getElementById('wat-editor');
                         if (watEditor) { watEditor.value = message.payload.content; }
-                        // editor.setValue(message.payload.content); // If you have a CodeMirror instance
                     } else if (message.command === 'updateWatFileName' && watFileNameDisplay) {
                         watFileNameDisplay.textContent = \`File name: \${message.payload.fileName}\`;
                     }
