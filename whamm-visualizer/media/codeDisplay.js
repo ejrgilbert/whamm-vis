@@ -50,30 +50,46 @@ function parseFidPc(fidPc) {
   return `(${fid}, ${pc})`;
 }
 
-const clickEvent = EditorView.domEventHandlers({
-  // Attach a click event listener to the editor's DOM element
-  click(event, view) {
-    // Get the position in the document from the click coordinates
-    const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
-
-    if (pos !== null) {
-      // Get the line object at that position
-      const line = view.state.doc.lineAt(pos);
-      clickedLineNumber = line.number;
-      // Print the line number (1-based) and its text
-      console.log(`Clicked line number: ${line.number}`);
-      console.log(`Line content: "${line.text}"`);
-      if (lineToFidPc) {
-        if (lineToFidPc.has(line.number)) {
-          console.log(`Function ID & Program Counter: ${lineToFidPc.get(line.number)}`);
-        } else {
-          console.log(lineToFidPc);
-        }
-      } else {
-        console.log('no lineToFidPc');
+function selectLine(view, line) {
+  clickedLineNumber = line.number;
+  // Print the line number (1-based) and its text
+  console.log(`Selected line number: ${line.number}`);
+  console.log(`Line content: "${line.text}"`);
+  if (lineToFidPc && lineToFidPc.has(line.number)) {
+    console.log(`Function ID & Program Counter: ${lineToFidPc.get(line.number)}`);
+    window.vscode.postMessage({
+      command: 'codeSelectedFidPc',
+      payload: {
+        selectedFid: lineToFidPc.get(line.number)[0],
+        selectedPc: lineToFidPc.get(line.number)[1]
       }
-      view.dispatch({ effects: forceGutterRefresh.of(null) });    }
-  },
+    });
+  }
+  view.dispatch({ effects: forceGutterRefresh.of(null) });
+}
+
+function deselectLine(view) {
+  clickedLineNumber = -1;
+  window.vscode.postMessage({
+    command: 'codeSelectedFidPc',
+    payload: {
+      selectedFid: -1,
+      selectedPc: -1
+    }
+  });
+  view.dispatch({ effects: forceGutterRefresh.of(null) });
+}
+
+const selectionListener = EditorView.updateListener.of(update => {
+  // We are only interested in selection changes.
+  if (update.selectionSet) {
+    const pos = update.state.selection.main.head;
+    const line = update.state.doc.lineAt(pos);
+    // Avoid re-triggering for the same line or deselecting on keyboard navigation.
+    if (clickedLineNumber !== line.number) {
+      selectLine(update.view, line);
+    }
+  }
 });
 
 window.addEventListener('message', event => {
@@ -99,6 +115,18 @@ window.addEventListener('message', event => {
       });
       view.dispatch(transaction);
       break;
+    case 'updateCodeScroll':
+      if (payload.lineNumber) {
+        const lineNumber = Math.floor(payload.lineNumber);
+        if (lineNumber > 0 && lineNumber <= view.state.doc.lines) {
+          const line = view.state.doc.line(lineNumber);
+          view.dispatch({
+            effects: EditorView.scrollIntoView(line.from, { y: "center" }),
+            selection: { anchor: line.from }
+          });
+        }
+      }
+      break;
   }
 
 });
@@ -113,7 +141,7 @@ const view = new EditorView({
       EditorView.editable.of(false),
       EditorView.contentAttributes.of({tabindex: "0"}),
       basicSetup, // Includes line numbers, syntax highlighting, etc.
-      clickEvent,
+      selectionListener,
       // EditorView.theme({
       //   "&": {
       //     backgroundColor: "#100C2A", // Dark grey background

@@ -81,8 +81,15 @@ export function sidebySidePieDisplay(context: vscode.ExtensionContext): vscode.D
         // Handle messages from the webview
         panel.webview.onDidReceiveMessage(
             async message => {
+                // For choosing files
                 let options: vscode.OpenDialogOptions;
                 let fileUri;
+
+                // For selecting fid and pc
+                let chartData: cDFuncs.chartData[];
+                let selectedFid: number;
+                let selectedPc: number;
+
                 switch (message.command) {
                     case 'chooseCsv':
                         options = {
@@ -147,7 +154,52 @@ export function sidebySidePieDisplay(context: vscode.ExtensionContext): vscode.D
                             });
                         }
                         return;
-                }
+                    case 'codeSelectedFidPc':
+                        if (!parsedCSV) {
+                            vscode.window.showInformationMessage('Please choose a CSV file to see visualization data.');
+                            return;
+                        }
+                        selectedFid = message.payload.selectedFid;
+                        selectedPc = message.payload.selectedPc;
+
+                        if (selectedFid === -1){
+                            chartData = cDFuncs.getChartData(parsedCSV, dataMapping);
+                        } else if (selectedPc === -1){
+                            chartData = cDFuncs.getChartDataByFid(parsedCSV,
+                                    message.payload.selectedFid,
+                                    dataMapping);
+                        } else {
+                            chartData = cDFuncs.getChartDataByFidAndPc(parsedCSV,
+                                    message.payload.selectedFid,
+                                    message.payload.selectedPc,
+                                    dataMapping);
+                        }
+                        panel.webview.postMessage({
+                            command: 'updateChartData',
+                            payload: {
+                                chartData: chartData,
+                                //chartsPerRow: 2
+                            }
+                        });
+                        return;
+                    case 'chartSelectedFidPc':
+                        if (!lineToFidPc) {
+                            vscode.window.showInformationMessage('Please choose a WAT file to see code data.');
+                            return;
+                        }
+
+                        selectedFid = Number.parseInt(message.payload.selectedFid);
+                        selectedPc = Number.parseInt(message.payload.selectedPc);
+
+                        
+                        panel.webview.postMessage({
+                            command: 'updateCodeScroll',
+                            payload: {
+                                lineNumber: fidPcToLine.get(selectedFid)?.get(selectedPc)
+                            }
+                        });
+                        return;
+                    }
             },
             undefined,
             context.subscriptions
@@ -160,6 +212,8 @@ export function sidebySidePieDisplay(context: vscode.ExtensionContext): vscode.D
 }
 
 let parsedCSV: Map<number, Map<number, Map<string, parseCSV.CSVRow[]>>>;
+let lineToFidPc: Map<number, [number, number]>;
+let fidPcToLine: Map<number, Map<number, number>>;
 
 function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri) {
     // Path to the ECharts library within your extension
@@ -291,6 +345,7 @@ function organizeLineNumbers(newWatContent: string): Map<number, [number, number
     watParser.run();
     let lineToFid = new Map(Array.from(watParser.func_mapping, a => a.reverse() as [number, number]));
     let output = new Map<number, [number, number]>();
+    fidPcToLine = new Map<number, Map<number, number>>();
     let currentFid = -1;
     let currentPc = -1;
     for (let line: number = 1; line <= lineCount; line++){
@@ -313,6 +368,11 @@ function organizeLineNumbers(newWatContent: string): Map<number, [number, number
             }
         }
         output.set(line, [currentFid, currentPc]);
+        if (!fidPcToLine.has(currentFid)){
+            fidPcToLine.set(currentFid, new Map<number,number>());
+        }
+        fidPcToLine.get(currentFid)!.set(currentPc,line);
     }
+    lineToFidPc = output;
     return output;
 }

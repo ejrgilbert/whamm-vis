@@ -11,7 +11,7 @@
     const myChart = echarts.init(chartDom, 'dark');
 
     // Show a loading animation or placeholder until data arrives
-    updateChart([{data: [{name: 'Placeholder', value: 0}], title: 'Placeholder', subtitle: 'Placeholder', dataGroupId: -1}]);
+    updateChart([{data: [], title: 'Placeholder', subtitle: 'Placeholder', dataGroupId: -1}]);
 
     
     // Caches the option field for the echart so when it focuses on one it can go back
@@ -47,8 +47,17 @@
         cachedOption = myChart.getOption();
         updateChart([{data: cachedOption.series[params.seriesIndex].data,
           title: cachedOption.title[params.seriesIndex].text,
+          subtitle: cachedOption.title[params.seriesIndex].subtext,
           dataGroupId: cachedOption.series[params.seriesIndex].dataGroupId}], cachedChartsPerRow);
         focused = true;
+        let fidPc = cachedOption.title[params.seriesIndex].subtext.split(':');
+        window.vscode.postMessage({
+          command:'chartSelectedFidPc',
+          payload: {
+            selectedFid: fidPc[0],
+            selectedPc: fidPc[1]
+          }
+        });
       } else {
         updateChart(chartDataFromOption(cachedOption), cachedChartsPerRow);
         focused = false;

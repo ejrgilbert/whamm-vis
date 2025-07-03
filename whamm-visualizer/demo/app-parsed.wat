@@ -36,6 +36,7 @@
     i32.const 4
     call $puts
     br 0
+    br 0
   )
   (data (;0;) (i32.const 0) "foo\0a")
   (data (;1;) (i32.const 4) "bar\0a")
