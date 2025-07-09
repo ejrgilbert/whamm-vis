@@ -9,6 +9,8 @@
     // Initialize ECharts instance
     const chartDom = document.getElementById('chart-container');
     const myChart = echarts.init(chartDom, 'dark');
+    let focused = false;
+
 
     // Show a loading animation or placeholder until data arrives
     updateChart([{data: [], title: 'Placeholder', subtitle: 'Placeholder', dataGroupId: -1}]);
@@ -39,7 +41,6 @@
     
     });
 
-    let focused = false;
 
     // Focuses on target chart when double clicked or returns to base view
     myChart.on('dblclick', function (params) {
@@ -61,6 +62,14 @@
       } else {
         updateChart(chartDataFromOption(cachedOption), cachedChartsPerRow);
         focused = false;
+
+        window.vscode.postMessage({
+          command:'chartSelectedFidPc',
+          payload: {
+            selectedFid: -1,
+            selectedPc: -1
+          }
+        });
       }
     });
 
@@ -203,6 +212,7 @@
       };
       myChart.resize(); // Ensure chart adapts to new container height
       myChart.setOption(chartOption, true); // true to not merge with previous options
+      focused = false;// TODO
     }
 
     /**

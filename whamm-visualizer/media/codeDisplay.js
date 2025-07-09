@@ -35,7 +35,7 @@ const fidPcLineGutter = gutter({
   },
   initialSpacer: () => new class extends GutterMarker {
     toDOM() { return document.createTextNode(""); }
-  }
+  },
 });
 
 function parseFidPc(fidPc) {
@@ -50,20 +50,22 @@ function parseFidPc(fidPc) {
   return `(${fid}, ${pc})`;
 }
 
-function selectLine(view, line) {
+function selectLine(view, line, emit = true) {
   clickedLineNumber = line.number;
   // Print the line number (1-based) and its text
   console.log(`Selected line number: ${line.number}`);
   console.log(`Line content: "${line.text}"`);
   if (lineToFidPc && lineToFidPc.has(line.number)) {
     console.log(`Function ID & Program Counter: ${lineToFidPc.get(line.number)}`);
-    window.vscode.postMessage({
-      command: 'codeSelectedFidPc',
-      payload: {
-        selectedFid: lineToFidPc.get(line.number)[0],
-        selectedPc: lineToFidPc.get(line.number)[1]
-      }
-    });
+    if (emit)  {
+      window.vscode.postMessage({
+        command: 'codeSelectedFidPc',
+        payload: {
+          selectedFid: lineToFidPc.get(line.number)[0],
+          selectedPc: lineToFidPc.get(line.number)[1]
+        }
+      });
+    }
   }
   view.dispatch({ effects: forceGutterRefresh.of(null) });
 }
@@ -133,7 +135,9 @@ window.addEventListener('message', event => {
       view.dispatch(transaction);
       break;
     case 'updateCodeScroll':
-      if (payload.lineNumber) {
+      if (payload.lineNumber === -1) {
+        deselectLine(view);
+      } else if (payload.lineNumber){
         const lineNumber = Math.floor(payload.lineNumber);
         if (lineNumber > 0 && lineNumber <= view.state.doc.lines) {
           const line = view.state.doc.line(lineNumber);
@@ -142,6 +146,7 @@ window.addEventListener('message', event => {
             selection: { anchor: line.from },
             userEvent: 'code.scroll'
           });
+          selectLine(view, line, false);
         }
       }
       break;

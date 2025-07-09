@@ -86,7 +86,7 @@ export function sidebySidePieDisplay(context: vscode.ExtensionContext): vscode.D
                 let fileUri;
 
                 // For selecting fid and pc
-                let chartData: cDFuncs.chartData[];
+                let chartData: cDFuncs.pieChartData[];
                 let selectedFid: number;
                 let selectedPc: number;
 
@@ -190,13 +190,21 @@ export function sidebySidePieDisplay(context: vscode.ExtensionContext): vscode.D
                         selectedFid = Number.parseInt(message.payload.selectedFid);
                         selectedPc = Number.parseInt(message.payload.selectedPc);
 
-                        
-                        panel.webview.postMessage({
-                            command: 'updateCodeScroll',
-                            payload: {
-                                lineNumber: fidPcToLine.get(selectedFid)?.get(selectedPc)
-                            }
-                        });
+                        if (selectedFid === -1 && selectedPc === -1){
+                            panel.webview.postMessage({
+                                command: 'updateCodeScroll',
+                                payload: {
+                                    lineNumber: -1
+                                }
+                            });
+                        } else {
+                            panel.webview.postMessage({
+                                command: 'updateCodeScroll',
+                                payload: {
+                                    lineNumber: fidPcToLine.get(selectedFid)?.get(selectedPc)
+                                }
+                            });
+                        }
                         return;
                     case 'resetChart':
                         panel.webview.postMessage({
@@ -341,9 +349,9 @@ function getNonce() {
     return text;
 }
 
-function dataMapping(lines: parseCSV.CSVRow[]): cDFuncs.chartData{
+function dataMapping(lines: parseCSV.CSVRow[]): cDFuncs.pieChartData{
     let opcode = lines[0].probe_id;
-    let entry:cDFuncs.chartData = {
+    let entry:cDFuncs.pieChartData = {
         data: [],
         title: opcode,
         subtitle: lines[0]['fid:pc'],

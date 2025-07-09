@@ -51,6 +51,15 @@ export function parseFromString(CSV: string): CSVRow[] {
         let value = data[i]["value(s)"];
         if(!Number.isNaN(parseFloat(value))){ // If value is a number
             data[i]["value(s)"] = parseFloat(value);
+        } else {
+            let entries: string[] = data[i]["value(s)"].split(";");
+            let valueMap: Map<any, any> = new Map();
+            for (let entry of entries){
+                let pair = entry.split('->');
+                let key = pair[0].substring(1, pair[0].length - 2).split(",").map(str => parseFloat(str));
+                valueMap.set(key, parseFloat(pair[1]));
+            }
+            data[i]["value(s)"] = valueMap;
         }
     }
 
@@ -94,13 +103,56 @@ export function fidPcPidMapFromString(CSV: string): Map<number, Map<number, Map<
     return fidToPcToPidToLine;
 }
 
+export function parseMapFromFile(filePath: string): Map<any, any>{
+    let csvFile = fs.readFileSync(filePath, 'utf8');
+    return parseMapFromString(csvFile);
+}
+
+export function parseMapFromString(CSV: string): Map<any, any>{
+    let result = Papa.parse(CSV, {
+        header: true,
+        skipEmptyLines: true,
+        delimiter: ", "
+    });
+    let data = result.data as any[];
+    let properties = Object.getOwnPropertyNames(data[0]);
+    let key = properties.find((str: string) => str.startsWith('key'));
+    let value: string|undefined = properties.find((str: string) => str.startsWith('val'));
+    if(!key){
+        console.log("No key");
+        console.log(data[0]);
+        return new Map();
+    }
+    if(!value){
+        console.log("No value");
+        return new Map();
+    }
+    let output: Map<any, any> = new Map();
+    for (let entry of data){
+        output.set(entry[key].substring(1, key.length - 2).split(",").map((str: string) => parseFloat(str)), parseFloat(entry[value]));
+    }
+
+    return output;
+
+}
+
 // Allows calling from CLI
 if (require.main === module) {
-    const filePath = process.argv[2];
+    const type = process.argv[2];
+    const filePath = process.argv[3];
     if (!filePath) {
-        console.error("Usage: node parseCSV.js <csv-file-path>");
+        console.error("Usage: node parseCSV.js <std or map> <csv-file-path>");
         process.exit(1);
     }
-    const data = parseFromFile(filePath);
+    let data;
+    switch (type){
+        case "std":
+            data = parseFromFile(filePath);
+            break;
+        case "map":
+            data = parseMapFromFile(filePath);
+            break;
+
+    }
     console.log(data);
 }

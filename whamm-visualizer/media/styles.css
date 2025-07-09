@@ -15,7 +15,7 @@ body {
 }
 #chart-container {
     width: 100%;
-    height: auto;
+    flex-grow: 1;
     margin: 0;
     padding: 0;
 }

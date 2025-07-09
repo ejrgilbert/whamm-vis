@@ -1,9 +1,9 @@
 import * as parseCSV from './parseCSV';
 
 /**
- * The format that the chart displayers can read
+ * The format that the pie chart displayers can read
  */
-export type chartData = {
+export type pieChartData = {
     data: { value: number; name: string }[];
     title: string;
     subtitle: string;
@@ -11,10 +11,20 @@ export type chartData = {
 }
 
 /**
+ * The format that the graph display can read
+ */
+export type graphChartData = {
+    nodeName: string;
+    edges: [string, number][];
+}
+
+type chartData = pieChartData;
+
+/**
  * Formats the data in the map to a format usable by the chart displayers 
  * @param fidToPcToPidToLine A map from *Function ID* to *Program Counter* to *Probe ID* to an array of {@link parseCSV.CSVRow}
- * @param mapping A function which takes an array of {@link parseCSV.CSVRow} and maps it to a {@link chartData}
- * @returns A {@link chartData} array
+ * @param mapping A function which takes an array of {@link parseCSV.CSVRow} and maps it to a {@link pieChartData}
+ * @returns A {@link pieChartData} array
  */
 export function getChartData(fidToPcToPidToLine: Map<number, Map<number, Map<string, parseCSV.CSVRow[]>>>, mapping: (lines: parseCSV.CSVRow[]) => chartData): chartData[]{
 
@@ -22,20 +32,21 @@ export function getChartData(fidToPcToPidToLine: Map<number, Map<number, Map<str
 
     let fids = fidToPcToPidToLine.keys();
     for (let fid of Array.from(fids)) {
-        let innerMap = fidToPcToPidToLine.get(fid);
-        if (!innerMap) {continue;}
-        let pcs = innerMap.keys();
-        for (let pc of Array.from(pcs)) {
-            let innerInnerMap = fidToPcToPidToLine.get(fid)?.get(pc);
-            if (!innerInnerMap) {continue;}
-            let pids = innerInnerMap.keys();
-            for (let pid of Array.from(pids)){
-                let lines = innerInnerMap.get(pid);
-                if (!lines || lines?.length === 0) {continue;}
-                let entry:chartData = mapping(lines);
-                output.push(entry);
-            }
-        }
+        // let innerMap = fidToPcToPidToLine.get(fid);
+        // if (!innerMap) {continue;}
+        // let pcs = innerMap.keys();
+        // for (let pc of Array.from(pcs)) {
+        //     let innerInnerMap = fidToPcToPidToLine.get(fid)?.get(pc);
+        //     if (!innerInnerMap) {continue;}
+        //     let pids = innerInnerMap.keys();
+        //     for (let pid of Array.from(pids)){
+        //         let lines = innerInnerMap.get(pid);
+        //         if (!lines || lines?.length === 0) {continue;}
+        //         let entry:pieChartData = mapping(lines);
+        //         output.push(entry);
+        //     }
+        // }
+        output = output.concat(getChartDataByFid(fidToPcToPidToLine, fid, mapping));
     }
     return output;
 }
@@ -44,8 +55,8 @@ export function getChartData(fidToPcToPidToLine: Map<number, Map<number, Map<str
  * Formats the data in the map to a format usable by the chart displayers, filtered by *Function ID* 
  * @param fidToPcToPidToLine A map from *Function ID* to *Program Counter* to *Probe ID* to an array of {@link parseCSV.CSVRow}
  * @param fid The *Function ID* to filter by
- * @param mapping A function which takes an array of {@link parseCSV.CSVRow} and maps it to a {@link chartData}
- * @returns A {@link chartData} array
+ * @param mapping A function which takes an array of {@link parseCSV.CSVRow} and maps it to a {@link pieChartData}
+ * @returns A {@link pieChartData} array
  */
 export function getChartDataByFid(fidToPcToPidToLine: Map<number, Map<number, Map<string, parseCSV.CSVRow[]>>>, fid: number, mapping: (lines: parseCSV.CSVRow[]) => chartData): chartData[]{
     let output: chartData[] = [];
@@ -53,15 +64,16 @@ export function getChartDataByFid(fidToPcToPidToLine: Map<number, Map<number, Ma
     if (!innerMap) {return output;}
     let pcs = innerMap.keys();
     for (let pc of Array.from(pcs)) {
-        let innerInnerMap = fidToPcToPidToLine.get(fid)?.get(pc);
-        if (!innerInnerMap) {continue;}
-        let pids = innerInnerMap.keys();
-        for (let pid of Array.from(pids)){
-            let lines = innerInnerMap.get(pid);
-            if (!lines || lines?.length === 0) {continue;}
-            let entry:chartData = mapping(lines);
-            output.push(entry);
-        }
+        // let innerInnerMap = fidToPcToPidToLine.get(fid)?.get(pc);
+        // if (!innerInnerMap) {continue;}
+        // let pids = innerInnerMap.keys();
+        // for (let pid of Array.from(pids)){
+        //     let lines = innerInnerMap.get(pid);
+        //     if (!lines || lines?.length === 0) {continue;}
+        //     let entry:pieChartData = mapping(lines);
+        //     output.push(entry);
+        // }
+        output = output.concat(getChartDataByFidAndPc(fidToPcToPidToLine, fid, pc, mapping));
     }
     return output;
 }
@@ -71,8 +83,8 @@ export function getChartDataByFid(fidToPcToPidToLine: Map<number, Map<number, Ma
  * @param fidToPcToPidToLine A map from *Function ID* to *Program Counter* to *Probe ID* to an array of {@link parseCSV.CSVRow}
  * @param fid The *Function ID* to filter by
  * @param pc The *Program Counter* to filter by
- * @param mapping A function which takes an array of {@link parseCSV.CSVRow} and maps it to a {@link chartData}
- * @returns A {@link chartData} array
+ * @param mapping A function which takes an array of {@link parseCSV.CSVRow} and maps it to a {@link pieChartData}
+ * @returns A {@link pieChartData} array
  */
 export function getChartDataByFidAndPc(fidToPcToPidToLine: Map<number, Map<number, Map<string, parseCSV.CSVRow[]>>>, fid: number, pc: number, mapping: (lines: parseCSV.CSVRow[]) => chartData): chartData[]{
     let output: chartData[] = [];
@@ -89,4 +101,18 @@ export function getChartDataByFidAndPc(fidToPcToPidToLine: Map<number, Map<numbe
         output.push(entry);
     }
     return output;
+}
+
+export function getGraphChartData(chartMap: Map<[number,number], number>): graphChartData[]{
+    let nodeToData: Map<number, graphChartData> = new Map();
+    for (let entry of chartMap){
+        if (!nodeToData.has(entry[0][0])){
+            nodeToData.set(entry[0][0], {nodeName: 'FID: ' + entry[0][0], edges: []});
+        }
+        if (!nodeToData.has(entry[0][1])){
+            nodeToData.set(entry[0][1], {nodeName: 'FID: ' + entry[0][1], edges: []});
+        }
+        nodeToData.get(entry[0][0])!.edges.push(['FID: ' + entry[0][1], entry[1]]);
+    }
+    return Array.from(nodeToData.values());
 }
