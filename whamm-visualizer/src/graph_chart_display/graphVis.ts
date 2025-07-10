@@ -3,8 +3,16 @@ import * as cDFuncs from '../chartDataFunctions';
 import * as vscode from 'vscode';
 import {getSVGPath} from './svgPathParser';
 
+/**
+ * Handles the whamm-visualizer.open-graph-display command
+ * @param context
+ * @returns A vscode extension command containing a graph
+ */
 export function graphDisplay(context: vscode.ExtensionContext): vscode.Disposable{
     return vscode.commands.registerCommand('whamm-visualizer.open-graph-display', async () => {
+        // The svg path data for the self loop icon
+        const selfLoopSVG = getSVGPath(vscode.Uri.joinPath(context.extensionUri, 'media', 'svg_files', 'selfLoop.svg'));
+        
         const panel = vscode.window.createWebviewPanel(
             'GraphVis',
             'GraphVis Output',
@@ -15,6 +23,7 @@ export function graphDisplay(context: vscode.ExtensionContext): vscode.Disposabl
 
                 // Restrict the webview to only load resources from the extension's directory
                 localResourceRoots: [vscode.Uri.file(context.extensionPath)],
+                // Ensures that it does not reset when switching tabs
                 retainContextWhenHidden: true,
             }
         );
@@ -26,22 +35,19 @@ export function graphDisplay(context: vscode.ExtensionContext): vscode.Disposabl
         }
         const filePath = editor.document.uri.fsPath;
         // Option 1: Use the file path
-        // const parsedCSV = parseCSV.parseFromFile(csvContent);
+        // const parsedCSV = parseCSV.parseMapFromFile(filePath);
 
 
         // Option 2: Use the file content
         const csvContent = editor.document.getText();
         parsedCSV = parseCSV.parseMapFromString(csvContent);
 
-
-        const selfLoopSVG = getSVGPath(vscode.Uri.joinPath(context.extensionUri, 'media', 'svg_files', 'selfLoop.svg'));
+        
 
         // Set the HTML content for the webview
         panel.webview.html = getWebviewContent(panel.webview, context.extensionUri);
 
         // Send data to the webview
-        // Adjust the payload structure based on what wizVis.wizVisFromString actually returns
-        // and what graph.js expects.
         panel.webview.postMessage({
             command: 'updateChartData',
             payload: {
@@ -60,7 +66,13 @@ export function graphDisplay(context: vscode.ExtensionContext): vscode.Disposabl
 
 let parsedCSV: Map<[number, number], number>;
 
-function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri) {
+/**
+ * 
+ * @param webview Returns the webview where everything actually happens
+ * @param extensionUri 
+ * @returns The HTML of the page
+ */
+function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri): string {
     // Path to the ECharts library within your extension
     const echartsJsPath = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'node_modules', 'echarts', 'dist', 'echarts.min.js'));
 

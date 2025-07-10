@@ -1,10 +1,14 @@
-import * as parseCSV from './parseCSV';
-import * as cDFuncs from './chartDataFunctions';
-import {FSM} from './wat_parser/fsm';
+import * as parseCSV from '../parseCSV';
+import * as cDFuncs from '../chartDataFunctions';
+import {FSM} from '../wat_parser/fsm';
 import * as vscode from 'vscode';
 
 
-
+/**
+ * Handles the whamm-visualizer.open-side-by-side-pie command
+ * @param context
+ * @returns A vscode extension command containing pie charts alongside a code display
+ */
 export function sidebySidePieDisplay(context: vscode.ExtensionContext): vscode.Disposable{
 	return vscode.commands.registerCommand('whamm-visualizer.open-side-by-side-pie', async () => {
         const panel = vscode.window.createWebviewPanel(
@@ -349,6 +353,11 @@ function getNonce() {
     return text;
 }
 
+/**
+ * How to map the data from a `parseCSV.CSVRow[]` to a `cDFuncs.pieChartData`
+ * @param lines 
+ * @returns 
+ */
 function dataMapping(lines: parseCSV.CSVRow[]): cDFuncs.pieChartData{
     let opcode = lines[0].probe_id;
     let entry:cDFuncs.pieChartData = {
@@ -361,7 +370,13 @@ function dataMapping(lines: parseCSV.CSVRow[]): cDFuncs.pieChartData{
     return entry;
 }
 
-
+/**
+ * Organizes a .wat file into [fid, pc] by line. 
+ * 
+ * Invalid fid or pc are set to -1
+ * @param newWatContent The text from a .wat file in correct format (output of wasm-tools print)
+ * @returns A Map from line number to a tuple of [fid, pc]
+ */
 function organizeLineNumbers(newWatContent: string): Map<number, [number, number]>{
     let lineCount = newWatContent.split('\n').length; // Use this instead of watParser.current_line_number to inclue trailing lines at the end
     let watParser = new FSM(newWatContent);

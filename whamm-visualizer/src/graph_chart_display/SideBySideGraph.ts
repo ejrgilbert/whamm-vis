@@ -5,9 +5,14 @@ import * as vscode from 'vscode';
 import {getSVGPath} from './svgPathParser';
 
 
-
+/**
+ * Handles the whamm-visualizer.open-side-by-side-graph command
+ * @param context
+ * @returns A vscode extension command containing a graph alongside a code display
+ */
 export function sideBySideGraphDisplay(context: vscode.ExtensionContext): vscode.Disposable{
     return vscode.commands.registerCommand('whamm-visualizer.open-side-by-side-graph', async () => {
+        // The svg path data for the self loop icon
         const selfLoopSVG = getSVGPath(vscode.Uri.joinPath(context.extensionUri, 'media', 'svg_files', 'selfLoop.svg'));
         
         const panel = vscode.window.createWebviewPanel(
@@ -51,8 +56,6 @@ export function sideBySideGraphDisplay(context: vscode.ExtensionContext): vscode
                 });
 
                 // Send data to the webview
-                // Adjust the payload structure based on what wizVis.wizVisFromString actually returns
-                // and what pieChart.js expects.
                 panel.webview.postMessage({
                             command: 'updateChartData',
                             payload: {
@@ -74,7 +77,7 @@ export function sideBySideGraphDisplay(context: vscode.ExtensionContext): vscode
                     command: 'updateWatContent',
                     payload: {
                         newCode: newWatContent,
-                        lineToFidPc: Object.fromEntries(lineToFidPc)
+                        lineToFidPc: Object.fromEntries(lineToFidPc) // Cannot transmit Maps
                     }
                 });
                 break;
@@ -155,7 +158,7 @@ export function sideBySideGraphDisplay(context: vscode.ExtensionContext): vscode
                                 command: 'updateWatContent',
                                 payload: {
                                     newCode: newWatContent,
-                                    lineToFidPc: Object.fromEntries(lineToFidPc)
+                                    lineToFidPc: Object.fromEntries(lineToFidPc) //Cannot transmit Maps
                                 }
                             });
                         }
@@ -173,7 +176,7 @@ export function sideBySideGraphDisplay(context: vscode.ExtensionContext): vscode
                             panel.webview.postMessage({
                                 command: 'selectNode',
                                 payload: {
-                                    selectedNode: 'FID: ' + selectedFid
+                                    selectedNode: selectedFid
                                 }
                             });
                         }
@@ -320,7 +323,7 @@ function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri) {
                     });
                 }
 
-                // Listen for messages from the extension
+                // Listen for messages from the extension to update the displayed file name
                 window.addEventListener('message', event => {
                     const message = event.data; // The JSON data that the extension sent
                     if (message.command === 'updateCsvFileName' && csvFileNameDisplay) {
@@ -348,19 +351,13 @@ function getNonce() {
     return text;
 }
 
-function dataMapping(lines: parseCSV.CSVRow[]): cDFuncs.pieChartData{
-    let opcode = lines[0].probe_id;
-    let entry:cDFuncs.pieChartData = {
-        data: [],
-        title: opcode,
-        subtitle: lines[0]['fid:pc'],
-        dataGroupId: opcode + lines[0]['fid:pc'],
-    };
-    lines.map(obj => entry.data.push({value: obj['value(s)'], name: obj.name}));
-    return entry;
-}
-
-
+/**
+ * Organizes a .wat file into [fid, pc] by line. 
+ * 
+ * Invalid fid or pc are set to -1
+ * @param newWatContent The text from a .wat file in correct format (output of wasm-tools print)
+ * @returns A Map from line number to a tuple of [fid, pc]
+ */
 function organizeLineNumbers(newWatContent: string): Map<number, [number, number]>{
     let lineCount = newWatContent.split('\n').length; // Use this instead of watParser.current_line_number to inclue trailing lines at the end
     let watParser = new FSM(newWatContent);
@@ -374,7 +371,7 @@ function organizeLineNumbers(newWatContent: string): Map<number, [number, number
         if (lineToFid.has(line)){
             currentFid = lineToFid.get(line)!;
             currentPc = -1;
-        } else if (currentFid >= 0){ // Alternatively can be done with line - startLine ...
+        } else if (currentFid >= 0){ // Alternatively can be done with line - startLine ... But this works, so ...
             const probeLocation = watParser.probe_mapping.get(currentFid);
             if (probeLocation) {
                 const startLine = probeLocation[0];

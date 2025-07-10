@@ -5,7 +5,11 @@ import * as vscode from 'vscode';
 
 import * as topBar from '../top_bars/topBar';
 
-
+/**
+ * Handles the whamm-visualizer.open-pie-display command
+ * @param context
+ * @returns A vscode extension command containing pie charts
+ */
 export function pieDisplay(context: vscode.ExtensionContext): vscode.Disposable{
 	return vscode.commands.registerCommand('whamm-visualizer.open-pie-display', async () => {
         const panel = vscode.window.createWebviewPanel(
@@ -29,7 +33,7 @@ export function pieDisplay(context: vscode.ExtensionContext): vscode.Disposable{
         }
         const filePath = editor.document.uri.fsPath;
         // Option 1: Use the file path
-        // const parsedCSV = parseCSV.parseFromFile(csvContent);
+        // const parsedCSV = parseCSV.parseFromFile(filePath);
 
 
         // Option 2: Use the file content
@@ -156,6 +160,11 @@ function getNonce() {
     return text;
 }
 
+/**
+ * How to map the data from a `parseCSV.CSVRow[]` to a `cDFuncs.pieChartData`
+ * @param lines 
+ * @returns 
+ */
 function dataMapping(lines: parseCSV.CSVRow[]): cDFuncs.pieChartData{
     let opcode = lines[0].probe_id;
     let entry:cDFuncs.pieChartData = {

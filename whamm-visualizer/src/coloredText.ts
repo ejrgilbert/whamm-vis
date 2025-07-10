@@ -18,11 +18,9 @@ export function yellow(text:string | number): string{
     return coloredText(text, 11);
 }
 
-
 export function blue(text:string | number): string{
     return coloredText(text, 12);
 }
-
 
 export function magenta(text:string | number): string{
     return coloredText(text, 13);

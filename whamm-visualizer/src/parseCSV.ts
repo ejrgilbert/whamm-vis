@@ -103,11 +103,21 @@ export function fidPcPidMapFromString(CSV: string): Map<number, Map<number, Map<
     return fidToPcToPidToLine;
 }
 
+/**
+ * 
+ * @param filePath The path to the file
+ * @returns A map from the keys to the values
+ */
 export function parseMapFromFile(filePath: string): Map<any, any>{
     let csvFile = fs.readFileSync(filePath, 'utf8');
     return parseMapFromString(csvFile);
 }
 
+/**
+ * 
+ * @param CSV The csv to be parsed
+ * @returns A map from the keys to the values
+ */
 export function parseMapFromString(CSV: string): Map<any, any>{
     let result = Papa.parse(CSV, {
         header: true,

@@ -2,6 +2,12 @@ import * as cheerio from 'cheerio';
 import * as fs from 'fs';
 import * as vscode from 'vscode';
 
+/**
+ * Extracts the path data from an .svg file
+ * @param svgFilePath The path to the .svg file
+ * @param pathId Optionally, give the pathId to extract
+ * @returns All path datas in the file
+ */
 export function getSvgPathData(svgFilePath: string, pathId?: string): string[] {
     try {
         const svgContent = fs.readFileSync(svgFilePath, 'utf8');
@@ -29,7 +35,12 @@ export function getSvgPathData(svgFilePath: string, pathId?: string): string[] {
     }
 }
 
-export function getSVGPath(svgUri: vscode.Uri) {
+/**
+ * Extracts the path data from an .svg file given a Uri
+ * @param svgUri Uri of the .svg file
+ * @returns The first path data in the file
+ */
+export function getSVGPath(svgUri: vscode.Uri): string {
     return getSvgPathData(svgUri.fsPath)[0];
 
 }

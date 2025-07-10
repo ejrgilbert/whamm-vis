@@ -5,7 +5,7 @@ import * as vscode from 'vscode';
 import * as textVis from './text_display/textVis';
 import * as pieVis from './pie_chart_display/pieVis';
 import * as graphVis from './graph_chart_display/graphVis';
-import * as sideBySidePie from './sideBySidePie';
+import * as sideBySidePie from './pie_chart_display/sideBySidePie';
 import * as sideBySideGraph from './graph_chart_display/SideBySideGraph';
 
 

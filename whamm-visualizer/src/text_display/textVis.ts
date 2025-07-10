@@ -5,6 +5,11 @@ const ansiToHtml = new AnsiToHtml();
 
 import * as vscode from 'vscode';
 
+/**
+ * Handles the whamm-visualizer.open-text-display command
+ * @param context
+ * @returns A vscode extension command containing a text display
+ */
 export function textDisplay(): vscode.Disposable{
     return vscode.commands.registerCommand('whamm-visualizer.open-text-display', async () => {
         const panel = vscode.window.createWebviewPanel(
@@ -30,6 +35,11 @@ export function textDisplay(): vscode.Disposable{
     });
 }
 
+/**
+ * 
+ * @param csvContent The .csv as text
+ * @returns An HTML with the .csv formatted
+ */
 export function getWebviewContent(csvContent: string){
       return `<!DOCTYPE html>
         <html lang="en">

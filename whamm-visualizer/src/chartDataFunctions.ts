@@ -14,8 +14,8 @@ export type pieChartData = {
  * The format that the graph display can read
  */
 export type graphChartData = {
-    nodeName: string;
-    edges: [string, number][];
+    nodeName: string | number;
+    edges: [string | number, number][];
     weight: number;
 }
 
@@ -104,16 +104,21 @@ export function getChartDataByFidAndPc(fidToPcToPidToLine: Map<number, Map<numbe
     return output;
 }
 
+/**
+ * Formats a map into a format usable by the graph displayer
+ * @param chartMap A map from [number, number] to another number
+ * @returns a {@link graphChartData} array
+ */
 export function getGraphChartData(chartMap: Map<[number,number], number>): graphChartData[]{
     let nodeToData: Map<number, graphChartData> = new Map();
     for (let entry of chartMap){
         if (!nodeToData.has(entry[0][0])){
-            nodeToData.set(entry[0][0], {nodeName: 'FID: ' + entry[0][0], edges: [], weight: 0});
+            nodeToData.set(entry[0][0], {nodeName: entry[0][0], edges: [], weight: 0});
         }
         if (!nodeToData.has(entry[0][1])){
-            nodeToData.set(entry[0][1], {nodeName: 'FID: ' + entry[0][1], edges: [], weight: 0});
+            nodeToData.set(entry[0][1], {nodeName: entry[0][1], edges: [], weight: 0});
         }
-        nodeToData.get(entry[0][0])!.edges.push(['FID: ' + entry[0][1], entry[1]]);
+        nodeToData.get(entry[0][0])!.edges.push([entry[0][1], entry[1]]);
         nodeToData.get(entry[0][1])!.weight += entry[1];
     }
     return Array.from(nodeToData.values());

@@ -31,6 +31,15 @@
 
       const payload = message.payload;
       switch (message.command) {
+        /*
+          {
+              command: 'updateChartData',
+              payload: {
+                  chartData: { data: { value: number; name: string }[]; title: string; subtitle: string; dataGroupId: string; },
+                  //chartsPerRow: 2
+              }
+          }
+        */
         case 'updateChartData':
           myChart.hideLoading();
           updateChart(payload.chartData, payload.chartsPerRow);
@@ -38,7 +47,6 @@
           cachedChartsPerRow = payload.chartsPerRow;
           break;
       }
-    
     });
 
 
@@ -73,17 +81,12 @@
       }
     });
 
-    function onBackButton(){
-      if (focused) {
-        updateChart(chartDataFromOption(cachedOption), cachedChartsPerRow);
-        focused = false;
-      }
-    }
-
+    /** Template Series Object */
     function generateSeriesObject(){
       return ({ name: 'Data', type: 'pie', radius: '50%', center: ['50%', '50%'], data: [], dataGroupId: 0});
     }
 
+    /** Template Title Object */
     function generateTitleObject(){
       return ({ text: 'Chart', subtext: '', left: 'center', textStyle:{fontSize: 15} });
     }
@@ -96,16 +99,7 @@
     function updateChart(chartData, chartsPerRow = -1){
       // Default options structure (data will be filled by message)
       let chartOption = {
-        toolbox: {
-          feature: {
-            myDrag: {
-              show: true,
-              title: 'Back Button',
-              icon: 'image://'+ window.BACK_BUTTON_PATH,
-              onclick: onBackButton
-            }
-          }
-        },
+        
         title: [],
         tooltip: { trigger: 'item' },
         legend: { orient: 'horizontal', left: 'center' },
