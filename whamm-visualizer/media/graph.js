@@ -12,10 +12,16 @@
             const payload = message.payload;
             switch (message.command) {
                 case 'updateChartData':
-                myChart.hideLoading();
-                updateChart(payload.title, payload.chartData, payload.selfLoopSVG);
-                cachedOption = myChart.getOption();
-                break;
+                    myChart.hideLoading();
+                    updateChart(payload.title, payload.chartData, payload.selfLoopSVG);
+                    cachedOption = myChart.getOption();
+                    break;
+                case 'selectNode':
+                    myChart.dispatchAction({
+                        type: 'select',
+                        name: payload.selectedNode
+                    });
+                    break;
             }
             
         });
@@ -45,12 +51,12 @@
                     source: nodes[i].id,
                     target: nodes[j].id,
                     name: `${nodes[i].name} to ${nodes[j].name}`,
+                    symbol: ['none', 'arrow'], // Add arrow at the target end
+                    symbolSize: 10, // Size of the arrow
                     lineStyle: {
                         color: '#888888', // Standard edge color
                         width: 3,
-                        curveness: 0, // Set curveness to 0 for straight lines
-                        symbol: ['none', 'arrow'], // Add arrow at the target end
-                        symbolSize: 10 // Size of the arrow
+                        curveness: 0 // Set curveness to 0 for straight lines
                     },
                     emphasis: { // Default emphasis for connecting edges
                         lineStyle: {
@@ -120,7 +126,9 @@
                             borderColor: '#e94560',
                             borderWidth: 3
                         }
-                    }
+                    },
+                    selectedMode: 'single',
+
                 }
             ]
         };
@@ -133,26 +141,28 @@
             var nodes = [];
             var selfLoopNodes = new Map();
             var links = [];
-            const nodeScale = 15;
+            const nodeScale = x => 20 * Math.log(x/2 + 2);
             for (const data of chartData){
                 const edgesMap = new Map(data.edges);
-                if (edgesMap.has(data.nodeName)){
-                    nodes.push({id: data.nodeName, name: data.nodeName, symbolSize: (1 + edgesMap.size) * nodeScale, symbol: 'path://' + selfLoopSVG});
+                let newNode = {id: data.nodeName, name: data.nodeName, symbolSize:  nodeScale(data.weight), _weight: data.weight,};
+                if (edgesMap.has(data.nodeName)){ // Make size based on times CALLED
+                    newNode.symbol = 'path://' + selfLoopSVG;
                     selfLoopNodes.set(data.nodeName, edgesMap.get(data.nodeName));
-                } else {
-                    nodes.push({id: data.nodeName, name: data.nodeName, symbolSize:  (1 + edgesMap.size) * nodeScale});
                 }
-
+                if (data.weight === 0){
+                    newNode.itemStyle = {color: '#eb9534'};
+                }
+                nodes.push(newNode);
                 for (const [destination, count] of edgesMap.entries()){
                     links.push({
                         source: data.nodeName,
                         target: destination,
                         name: `${data.nodeName} to ${destination}`,
                         value: count,
+                        symbol: ['none', 'arrow'], // Add arrow at the target end
+                        symbolSize: 10, // Size of the arrow
                         lineStyle: {
-                            curveness: 0.1, // Set curveness to 0 for straight lines
-                            symbol: ['none', 'arrow'], // Add arrow at the target end
-                            symbolSize: [0, 100] // Size of the arrow
+                            curveness: 0.2 // Set curveness to 0 for straight lines
                         },
                         emphasis: { // Default emphasis for connecting edges
                             lineStyle: {
@@ -178,13 +188,13 @@
                 tooltip: {
                     formatter: function (params) {
                         if (params.dataType === 'node') {
-                            let tooltipText = params.name;
+                            let tooltipText = params.name + '<br/> Called: ' + params.data._weight;
                             if (selfLoopNodes.has(params.data.id)) {
                                 tooltipText += '<br/>Self Loop Count: ' + selfLoopNodes.get(params.data.id);
                             }
                             return tooltipText;
                         } else if (params.dataType === 'edge') {
-                            return 'Edge: ' + params.name + '<br/>Source: ' + params.data.source + '<br/>Target: ' + params.data.target + '<br/>Count: ' + params.data.value;
+                            return'Source: ' + params.data.source + '<br/>Target: ' + params.data.target + '<br/>Count: ' + params.data.value;
                         }
                         return '';
                     },
@@ -227,6 +237,13 @@
                                 borderColor: '#e94560',
                                 borderWidth: 3
                             }
+                        },
+                        selectedMode: 'single',
+                        select: {
+                            itemStyle: {
+                                borderColor: '#39db54',
+                                borderWidth: 3
+                            }
                         }
                     }
                 ]
@@ -235,5 +252,31 @@
             // Set the options to the chart
             myChart.setOption(option);
         }
+
+        let selectedNode = -1;
+        myChart.on('click', function (params) {
+            const currentNode = parseInt(params.data.name.substring(5))
+            //"FID: " is 5 long so need substring starting from 5
+            window.vscode.postMessage({
+                command:'chartSelectedFidPc',
+                payload: {
+                    selectedFid: currentNode,
+                    selectedPc: -1
+            }
+            });
+            if(params.dataType === 'edge' && selectedNode !== currentNode){
+                myChart.dispatchAction({
+                    type: 'select',
+                    name: 'FID: ' + currentNode
+                });
+            }
+            if (selectedNode !== currentNode){
+                selectedNode = currentNode;
+            } else {
+                selectedNode = -1;
+            }
+        });
+
+        
     }, 1);
 }());

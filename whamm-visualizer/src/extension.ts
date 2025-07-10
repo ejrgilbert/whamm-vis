@@ -6,6 +6,7 @@ import * as textVis from './text_display/textVis';
 import * as pieVis from './pie_chart_display/pieVis';
 import * as graphVis from './graph_chart_display/graphVis';
 import * as sideBySidePie from './sideBySidePie';
+import * as sideBySideGraph from './graph_chart_display/SideBySideGraph';
 
 
 
@@ -34,6 +35,10 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(
 		graphVis.graphDisplay(context)
+	);
+
+	context.subscriptions.push(
+		sideBySideGraph.sideBySideGraphDisplay(context)
 	);
 }
 

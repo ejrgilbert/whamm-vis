@@ -16,6 +16,7 @@ export type pieChartData = {
 export type graphChartData = {
     nodeName: string;
     edges: [string, number][];
+    weight: number;
 }
 
 type chartData = pieChartData;
@@ -107,12 +108,13 @@ export function getGraphChartData(chartMap: Map<[number,number], number>): graph
     let nodeToData: Map<number, graphChartData> = new Map();
     for (let entry of chartMap){
         if (!nodeToData.has(entry[0][0])){
-            nodeToData.set(entry[0][0], {nodeName: 'FID: ' + entry[0][0], edges: []});
+            nodeToData.set(entry[0][0], {nodeName: 'FID: ' + entry[0][0], edges: [], weight: 0});
         }
         if (!nodeToData.has(entry[0][1])){
-            nodeToData.set(entry[0][1], {nodeName: 'FID: ' + entry[0][1], edges: []});
+            nodeToData.set(entry[0][1], {nodeName: 'FID: ' + entry[0][1], edges: [], weight: 0});
         }
         nodeToData.get(entry[0][0])!.edges.push(['FID: ' + entry[0][1], entry[1]]);
+        nodeToData.get(entry[0][1])!.weight += entry[1];
     }
     return Array.from(nodeToData.values());
 }

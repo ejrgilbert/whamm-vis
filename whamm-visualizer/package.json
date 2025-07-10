@@ -32,6 +32,11 @@
         "command": "whamm-visualizer.open-graph-display",
         "category": "Whamm Visualizer",
         "title": "Open Graph Display"
+      },
+      {
+        "command": "whamm-visualizer.open-side-by-side-graph",
+        "category": "Whamm Visualizer",
+        "title": "Open Side By Side Graph Display"
       }
     ]
   },
