@@ -37,13 +37,13 @@ function wizVis(csv: parseCSV.CSVRow[]): string{
     // Organizes the data by fid then by pc
     let fidToPcToLine: Map<number, Map<number, parseCSV.CSVRow[]>> = new Map();
     for (let line of csv) {
-        if (!fidToPcToLine.get(line["fid"])){
-            fidToPcToLine.set(line["fid"], new Map());
+        if (!fidToPcToLine.get(line["fid"]!)){
+            fidToPcToLine.set(line["fid"]!, new Map());
         }
-        if (!fidToPcToLine.get(line["fid"])?.get(line["pc"])) {
-            fidToPcToLine.get(line["fid"])?.set(line["pc"], []);
+        if (!fidToPcToLine.get(line["fid"]!)?.get(line["pc"]!)) {
+            fidToPcToLine.get(line["fid"]!)?.set(line["pc"]!, []);
         }
-        fidToPcToLine.get(line["fid"])?.get(line["pc"])?.push(line);
+        fidToPcToLine.get(line["fid"]!)?.get(line["pc"]!)?.push(line);
         
     }
 
@@ -58,7 +58,7 @@ function wizVis(csv: parseCSV.CSVRow[]): string{
         for (let pc of Array.from(pcs)) {
             let lines = innerMap.get(pc);
             if (!lines || lines?.length === 0) {continue;}
-            let opcode = lines[0].probe_id.split(":")[2]; // Gets the opcode (after #_wasm:opcode: and before :mode)
+            let opcode = lines[0].probe_id!.split(":")[2]; // Gets the opcode (after #_wasm:opcode: and before :mode)
             outputString += "\t +" + pc + " " + opcode + ":\t[";
             outputString += lines.map(obj => obj['value(s)']).join(", ");
             outputString += "]\n";
@@ -76,13 +76,13 @@ function coloredWizVis(csv: parseCSV.CSVRow[], greyZero: boolean = false): strin
     // Organizes the data by fid then by pc
     let fidToPcToLine: Map<number, Map<number, parseCSV.CSVRow[]>> = new Map();
     for (let line of csv) {
-        if (!fidToPcToLine.get(line["fid"])){
-            fidToPcToLine.set(line["fid"], new Map());
+        if (!fidToPcToLine.get(line["fid"]!)){
+            fidToPcToLine.set(line["fid"]!, new Map());
         }
-        if (!fidToPcToLine.get(line["fid"])?.get(line["pc"])) {
-            fidToPcToLine.get(line["fid"])?.set(line["pc"], []);
+        if (!fidToPcToLine.get(line["fid"]!)?.get(line["pc"]!)) {
+            fidToPcToLine.get(line["fid"]!)?.set(line["pc"]!, []);
         }
-        fidToPcToLine.get(line["fid"])?.get(line["pc"])?.push(line);
+        fidToPcToLine.get(line["fid"]!)?.get(line["pc"]!)?.push(line);
         
     }
 
@@ -97,7 +97,7 @@ function coloredWizVis(csv: parseCSV.CSVRow[], greyZero: boolean = false): strin
         for (let pc of Array.from(pcs)) {
             let lines = innerMap.get(pc);
             if (!lines || lines?.length === 0) {continue;}
-            let opcode = lines[0].probe_id.split(":")[2]; // Gets the opcode (after #_wasm:opcode: and before :mode)
+            let opcode = lines[0].probe_id!.split(":")[2]; // Gets the opcode (after #_wasm:opcode: and before :mode)
             outputString += "\t " + ct.cyan("+" + pc) + " " + ct.green(opcode) + ":\t["; // The program counter and opcode
             
             if (greyZero) {

@@ -38,7 +38,7 @@ export function pieDisplay(context: vscode.ExtensionContext): vscode.Disposable{
 
         // Option 2: Use the file content
         const csvContent = editor.document.getText();
-        parsedCSV = parseCSV.fidPcPidMapFromString(csvContent);
+        parsedCSV = cDFuncs.organizeCSVByFidPcPid(parseCSV.parseFromString(csvContent));
 
         // Set the HTML content for the webview
         panel.webview.html = getWebviewContent(panel.webview, context.extensionUri);
@@ -49,7 +49,7 @@ export function pieDisplay(context: vscode.ExtensionContext): vscode.Disposable{
         panel.webview.postMessage({
             command: 'updateChartData',
             payload: {
-                chartData: cDFuncs.getChartData(parsedCSV, dataMapping),
+                chartData: cDFuncs.getChartDataFromMap(parsedCSV, dataMapping),
                 //chartsPerRow: 2
             }
         });
@@ -166,13 +166,14 @@ function getNonce() {
  * @returns 
  */
 function dataMapping(lines: parseCSV.CSVRow[]): cDFuncs.pieChartData{
-    let opcode = lines[0].probe_id;
+    let opcode = lines[0].probe_id!;
     let entry:cDFuncs.pieChartData = {
+        pieChart: true,
         data: [],
         title: opcode,
-        subtitle: lines[0]['fid:pc'],
+        subtitle: lines[0]['fid:pc']!,
         dataGroupId: opcode + lines[0]['fid:pc'],
     };
-    lines.map(obj => entry.data.push({value: obj['value(s)'], name: obj.name}));
+    lines.map(obj => entry.data.push({value: obj['value(s)'], name: obj.name!}));
     return entry;
 }

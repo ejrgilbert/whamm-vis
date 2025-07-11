@@ -39,7 +39,7 @@ export function sidebySidePieDisplay(context: vscode.ExtensionContext): vscode.D
         switch (fileExtension){
             case 'csv':
                 // Option 1: Use the file path
-                parsedCSV = parseCSV.fidPcPidMapFromFile(filePath);
+                parsedCSV = cDFuncs.organizeCSVByFidPcPid(parseCSV.parseFromFile(filePath));
                 // Option 2: Use the file content
                 // const csvContent = editor.document.getText();
                 // parsedCSV = parseCSV.fidPcPidMapFromString(csvContent);
@@ -52,12 +52,10 @@ export function sidebySidePieDisplay(context: vscode.ExtensionContext): vscode.D
                 });
 
                 // Send data to the webview
-                // Adjust the payload structure based on what wizVis.wizVisFromString actually returns
-                // and what pieChart.js expects.
                 panel.webview.postMessage({
                     command: 'updateChartData',
                     payload: {
-                        chartData: cDFuncs.getChartData(parsedCSV, dataMapping),
+                        chartData: cDFuncs.getChartDataFromMap(parsedCSV, dataMapping),
                         //chartsPerRow: 2
                     }
                 });
@@ -74,7 +72,7 @@ export function sidebySidePieDisplay(context: vscode.ExtensionContext): vscode.D
                     command: 'updateWatContent',
                     payload: {
                         newCode: newWatContent,
-                        lineToFidPc: Object.fromEntries(lineToFidPc)
+                        lineToFidPc: Object.fromEntries(lineToFidPc) // Cannot transmit Maps
                     }
                 });
                 break;
@@ -90,7 +88,7 @@ export function sidebySidePieDisplay(context: vscode.ExtensionContext): vscode.D
                 let fileUri;
 
                 // For selecting fid and pc
-                let chartData: cDFuncs.pieChartData[];
+                let chartData: cDFuncs.chartData[];
                 let selectedFid: number;
                 let selectedPc: number;
 
@@ -108,7 +106,7 @@ export function sidebySidePieDisplay(context: vscode.ExtensionContext): vscode.D
 
                         if (fileUri && fileUri[0]) {
                             const newCsvContent = await vscode.workspace.fs.readFile(fileUri[0]);
-                            const newParsedCSV = parseCSV.fidPcPidMapFromString(newCsvContent.toString());
+                            const newParsedCSV = cDFuncs.organizeCSVByFidPcPid(parseCSV.parseFromString(newCsvContent.toString()));
                             
                             // Update the global parsedCSV for this panel instance
                             parsedCSV = newParsedCSV;
@@ -123,7 +121,7 @@ export function sidebySidePieDisplay(context: vscode.ExtensionContext): vscode.D
                             panel.webview.postMessage({
                                 command: 'updateChartData',
                                 payload: {
-                                    chartData: cDFuncs.getChartData(parsedCSV, dataMapping),
+                                    chartData: cDFuncs.getChartDataFromMap(parsedCSV, dataMapping),
                                 }
                             });
                         }
@@ -153,7 +151,7 @@ export function sidebySidePieDisplay(context: vscode.ExtensionContext): vscode.D
                                 command: 'updateWatContent',
                                 payload: {
                                     newCode: newWatContent,
-                                    lineToFidPc: Object.fromEntries(lineToFidPc)
+                                    lineToFidPc: Object.fromEntries(lineToFidPc) //Cannot transmit Maps
                                 }
                             });
                         }
@@ -167,7 +165,7 @@ export function sidebySidePieDisplay(context: vscode.ExtensionContext): vscode.D
                         selectedPc = message.payload.selectedPc;
 
                         if (selectedFid === -1){
-                            chartData = cDFuncs.getChartData(parsedCSV, dataMapping);
+                            chartData = cDFuncs.getChartDataFromMap(parsedCSV, dataMapping);
                         } else if (selectedPc === -1){
                             chartData = cDFuncs.getChartDataByFid(parsedCSV,
                                     message.payload.selectedFid,
@@ -214,7 +212,7 @@ export function sidebySidePieDisplay(context: vscode.ExtensionContext): vscode.D
                         panel.webview.postMessage({
                             command: 'updateChartData',
                             payload: {
-                                chartData: cDFuncs.getChartData(parsedCSV, dataMapping),
+                                chartData: cDFuncs.getChartDataFromMap(parsedCSV, dataMapping),
                             }
                         });
                     return;
@@ -325,7 +323,7 @@ function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri) {
                     });
                 }
 
-                // Listen for messages from the extension
+                // Listen for messages from the extension to update the displayed file name
                 window.addEventListener('message', event => {
                     const message = event.data; // The JSON data that the extension sent
                     if (message.command === 'updateCsvFileName' && csvFileNameDisplay) {
@@ -359,14 +357,15 @@ function getNonce() {
  * @returns 
  */
 function dataMapping(lines: parseCSV.CSVRow[]): cDFuncs.pieChartData{
-    let opcode = lines[0].probe_id;
+    let opcode = lines[0].probe_id!;
     let entry:cDFuncs.pieChartData = {
+        pieChart: true,
         data: [],
         title: opcode,
-        subtitle: lines[0]['fid:pc'],
+        subtitle: lines[0]['fid:pc']!,
         dataGroupId: opcode + lines[0]['fid:pc'],
     };
-    lines.map(obj => entry.data.push({value: obj['value(s)'], name: obj.name}));
+    lines.map(obj => entry.data.push({value: obj['value(s)'], name: obj.name!}));
     return entry;
 }
 
@@ -390,7 +389,7 @@ function organizeLineNumbers(newWatContent: string): Map<number, [number, number
         if (lineToFid.has(line)){
             currentFid = lineToFid.get(line)!;
             currentPc = -1;
-        } else if (currentFid >= 0){ // Alternatively can be done with line - startLine ...
+        } else if (currentFid >= 0){ // Alternatively can be done with line - startLine ... But this works, so ...
             const probeLocation = watParser.probe_mapping.get(currentFid);
             if (probeLocation) {
                 const startLine = probeLocation[0];

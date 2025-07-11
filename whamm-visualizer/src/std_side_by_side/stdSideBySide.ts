@@ -2,16 +2,16 @@ import * as parseCSV from '../parseCSV';
 import * as cDFuncs from '../chartDataFunctions';
 import {FSM} from '../wat_parser/fsm';
 import * as vscode from 'vscode';
-import {getSVGPath} from './svgPathParser';
+import {getSVGPath} from '../graph_chart_display/svgPathParser';
 
 
 /**
- * Handles the whamm-visualizer.open-side-by-side-graph command
+ * Handles the whamm-visualizer.open-side-by-side-generic command
  * @param context
- * @returns A vscode extension command containing a graph alongside a code display
+ * @returns A vscode extension command containing a chart alongside a code display
  */
 export function sideBySideGraphDisplay(context: vscode.ExtensionContext): vscode.Disposable{
-    return vscode.commands.registerCommand('whamm-visualizer.open-side-by-side-graph', async () => {
+    return vscode.commands.registerCommand('whamm-visualizer.open-side-by-side-generic', async () => {
         // The svg path data for the self loop icon
         const selfLoopSVG = getSVGPath(vscode.Uri.joinPath(context.extensionUri, 'media', 'svg_files', 'selfLoop.svg'));
         
@@ -43,7 +43,7 @@ export function sideBySideGraphDisplay(context: vscode.ExtensionContext): vscode
         switch (fileExtension){
             case 'csv':
                 // Option 1: Use the file path
-                parsedCSV = cDFuncs.organizeCSVByValue(parseCSV.parseFromFile(filePath));
+                parsedCSV = parseCSV.parseMapFromFile(filePath);
                 // Option 2: Use the file content
                 // const csvContent = editor.document.getText();
                 // parsedCSV = parseCSV.fidPcPidMapFromString(csvContent);
@@ -59,7 +59,7 @@ export function sideBySideGraphDisplay(context: vscode.ExtensionContext): vscode
                 panel.webview.postMessage({
                             command: 'updateChartData',
                             payload: {
-                                chartData: cDFuncs.getGraphChartData(refactorFix(parsedCSV)),
+                                chartData: cDFuncs.getGraphChartData(parsedCSV[0]['value(s)']),
                                 title: filePath.split('/').pop() || filePath.split('\\').pop(),
                                 selfLoopSVG: selfLoopSVG
                             }
@@ -111,7 +111,7 @@ export function sideBySideGraphDisplay(context: vscode.ExtensionContext): vscode
 
                         if (fileUri && fileUri[0]) {
                             const newCsvContent = await vscode.workspace.fs.readFile(fileUri[0]);
-                            const newParsedCSV = cDFuncs.organizeCSVByValue(parseCSV.parseFromString(newCsvContent.toString()));
+                            const newParsedCSV = parseCSV.parseMapFromString(newCsvContent.toString());
                             
                             // Update the global parsedCSV for this panel instance
                             parsedCSV = newParsedCSV;
@@ -126,7 +126,7 @@ export function sideBySideGraphDisplay(context: vscode.ExtensionContext): vscode
                             panel.webview.postMessage({
                                 command: 'updateChartData',
                                 payload: {
-                                    chartData: cDFuncs.getGraphChartData(refactorFix(parsedCSV)),
+                                    chartData: cDFuncs.getGraphChartData(parsedCSV[0]['value(s)']),
                                     title: filePath.split('/').pop() || filePath.split('\\').pop(),
                                     selfLoopSVG: selfLoopSVG
                                 }
@@ -172,7 +172,7 @@ export function sideBySideGraphDisplay(context: vscode.ExtensionContext): vscode
                         selectedPc = message.payload.selectedPc;
 
                         if (selectedFid !== -1){
-                            
+                            // TODO: Select Node
                             panel.webview.postMessage({
                                 command: 'selectNode',
                                 payload: {
@@ -210,7 +210,7 @@ export function sideBySideGraphDisplay(context: vscode.ExtensionContext): vscode
                         panel.webview.postMessage({
                             command: 'updateChartData',
                             payload: {
-                                chartData: cDFuncs.getGraphChartData(refactorFix(parsedCSV)),
+                                chartData: cDFuncs.getGraphChartData(parsedCSV[0]['value(s)']),
                                 title: filePath.split('/').pop() || filePath.split('\\').pop(),
                                 selfLoopSVG: selfLoopSVG
                             }
@@ -228,7 +228,7 @@ export function sideBySideGraphDisplay(context: vscode.ExtensionContext): vscode
     });
 }
 
-let parsedCSV: Map<any, parseCSV.CSVRow[]>;
+let parsedCSV: parseCSV.CSVRow[];
 let lineToFidPc: Map<number, [number, number]>;
 let fidPcToLine: Map<number, Map<number, number>>;
 
@@ -393,51 +393,5 @@ function organizeLineNumbers(newWatContent: string): Map<number, [number, number
         fidPcToLine.get(currentFid)!.set(currentPc,line);
     }
     lineToFidPc = output;
-    return output;
-}
-
-// /**
-//  * How to map the data from a `parseCSV.CSVRow[]` to a `cDFuncs.graphChartData`
-//  * @param lines 
-//  * @returns 
-//  */
-// function dataMapping(lines: parseCSV.CSVRow[]): cDFuncs.graphChartData{
-//     let fid = lines[0]["value(s)"][0]!;
-//     let entry: cDFuncs.graphChartData = {
-//         graphChart: true,
-//         nodeName: fid,
-//         edges: [],
-//         weight: 1 // BREAKS on commit after "Added Documentation Comments" commit
-//     };
-//     // lines.map(obj => entry.data.push({value: obj['value(s)'], name: obj.name!}));
-//     // return entry;
-
-//     // let nodeToData: Map<number, graphChartData> = new Map();
-//     //     for (let entry of chartMap){
-//     //         if (!nodeToData.has(entry[0][0])){
-//     //             nodeToData.set(entry[0][0], {graphChart: true, nodeName: entry[0][0], edges: [], weight: 0});
-//     //         }
-//     //         if (!nodeToData.has(entry[0][1])){
-//     //             nodeToData.set(entry[0][1], {graphChart: true, nodeName: entry[0][1], edges: [], weight: 0});
-//     //         }
-//     //         nodeToData.get(entry[0][0])!.edges.push([entry[0][1], entry[1]]);
-//     //         nodeToData.get(entry[0][1])!.weight += entry[1];
-//     //     }
-//     //     return Array.from(nodeToData.values());
-
-//     for (let line of lines) {
-
-//     }
-// }
-
-function refactorFix(parsedCSV: Map<any, parseCSV.CSVRow[]>): Map<[number, number], number>{
-    let output: Map<[number, number], number> = new Map();
-    for (let key of Array.from(parsedCSV.keys())){
-        let rows = parsedCSV.get(key)!;
-        for (let row of rows){
-            let values: [any, [any, any]] = row["value(s)"];
-            output.set(values[1][0], values[1][1]);
-        }
-    }
     return output;
 }
