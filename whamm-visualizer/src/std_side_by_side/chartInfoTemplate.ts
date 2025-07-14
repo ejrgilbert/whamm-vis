@@ -23,20 +23,37 @@ type fidPc ={
     selectedPc: number
 }
 
+/**
+ * A template for how the charts should be accessed
+ */
 export abstract class chartInfoTemplate<Payload> {
     
+    constructor(parsedCSV: parseCSV.CSVRow[]){
+        this.parsedCSV = parsedCSV;
+    }
+
     /**
-     * The path to the chart script as a {@link vscode.Uri}
+     * The parsed CSV
      */
-    abstract chartScriptPath: vscode.Uri;
+    protected parsedCSV: parseCSV.CSVRow[];
+
+    /**
+     * The CSV organized to visualization specific format
+     */
+    protected organizedCSV: any;
+
+    /**
+     * The file name of the chart script as a string
+     * 
+     * Must be in context.extensionUri/media
+     */
+    abstract readonly chartScriptFileName: string;
 
     /**
      * Generates what is sent out to the chart
-     * @param parsedCSV The parsed CSV
-     * @param filePath The filePath of the .csv file
      * @return A payload object, may be different for each chart type
      */
-    abstract generateUpdateChartDataPayload(parsedCSV: parseCSV.CSVRow[], filePath: string): Payload; 
+    abstract generateUpdateChartDataPayload(): Payload; 
 
     /**
      * What happens when a Fid and Pc are selected in the code panel
@@ -45,10 +62,10 @@ export abstract class chartInfoTemplate<Payload> {
      */
     abstract onCodeSelectedFidPc(payload: fidPc, panel: vscode.WebviewPanel):  void;
 
-    /**
-     * Maps from an Array of parseCSV.CSVRow to 
-     * @param lines 
-     * @returns
-     */
-    abstract dataMapping(lines: parseCSV.CSVRow[]): cDFuncs.chartData;
+    // /**
+    //  * Maps from an Array of parseCSV.CSVRow to relevant chartData type
+    //  * @param lines 
+    //  * @returns
+    //  */
+    // abstract dataMapping(lines: parseCSV.CSVRow[]): cDFuncs.chartData;
 }

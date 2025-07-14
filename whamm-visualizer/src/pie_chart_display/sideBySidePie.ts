@@ -55,7 +55,7 @@ export function sidebySidePieDisplay(context: vscode.ExtensionContext): vscode.D
                 panel.webview.postMessage({
                     command: 'updateChartData',
                     payload: {
-                        chartData: cDFuncs.getChartDataFromMap(parsedCSV, dataMapping),
+                        chartData: cDFuncs.getChartDataFromFidPcPidMap(parsedCSV, dataMapping),
                         //chartsPerRow: 2
                     }
                 });
@@ -121,7 +121,7 @@ export function sidebySidePieDisplay(context: vscode.ExtensionContext): vscode.D
                             panel.webview.postMessage({
                                 command: 'updateChartData',
                                 payload: {
-                                    chartData: cDFuncs.getChartDataFromMap(parsedCSV, dataMapping),
+                                    chartData: cDFuncs.getChartDataFromFidPcPidMap(parsedCSV, dataMapping),
                                 }
                             });
                         }
@@ -165,7 +165,7 @@ export function sidebySidePieDisplay(context: vscode.ExtensionContext): vscode.D
                         selectedPc = message.payload.selectedPc;
 
                         if (selectedFid === -1){
-                            chartData = cDFuncs.getChartDataFromMap(parsedCSV, dataMapping);
+                            chartData = cDFuncs.getChartDataFromFidPcPidMap(parsedCSV, dataMapping);
                         } else if (selectedPc === -1){
                             chartData = cDFuncs.getChartDataByFid(parsedCSV,
                                     message.payload.selectedFid,
@@ -212,7 +212,7 @@ export function sidebySidePieDisplay(context: vscode.ExtensionContext): vscode.D
                         panel.webview.postMessage({
                             command: 'updateChartData',
                             payload: {
-                                chartData: cDFuncs.getChartDataFromMap(parsedCSV, dataMapping),
+                                chartData: cDFuncs.getChartDataFromFidPcPidMap(parsedCSV, dataMapping),
                             }
                         });
                     return;

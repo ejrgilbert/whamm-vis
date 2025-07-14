@@ -52,8 +52,8 @@ export function parseFromString(CSV: string): CSVRow[] {
             let mapOutput: CSVRow[] = [];
             for (let entry of data){
                 let keyArray = entry[key].substring(1, key.length - 2).split(",").map((str: string) => parseFloat(str));
-                // [key 1, [keys, value]]
-                mapOutput.push({"value(s)": [keyArray[0], [keyArray, parseFloat(entry[value])]]});
+                // [keys, value]
+                mapOutput.push({"value(s)": [keyArray, parseFloat(entry[value])]});
             }
             return mapOutput;
         default: // Standard format
@@ -71,15 +71,6 @@ export function parseFromString(CSV: string): CSVRow[] {
                 let value = data[i]["value(s)"];
                 if(!Number.isNaN(parseFloat(value))){ // If value is a number
                     data[i]["value(s)"] = parseFloat(value);
-                } else {
-                    let entries: string[] = data[i]["value(s)"].split(";");
-                    let valueMap: Map<any, any> = new Map();
-                    for (let entry of entries){
-                        let pair = entry.split('->');
-                        let key = pair[0].substring(1, pair[0].length - 2).split(",").map(str => parseFloat(str));
-                        valueMap.set(key, parseFloat(pair[1]));
-                    }
-                    data[i]["value(s)"] = valueMap;
                 }
             }
             return data;

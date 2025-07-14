@@ -49,7 +49,7 @@ export function pieDisplay(context: vscode.ExtensionContext): vscode.Disposable{
         panel.webview.postMessage({
             command: 'updateChartData',
             payload: {
-                chartData: cDFuncs.getChartDataFromMap(parsedCSV, dataMapping),
+                chartData: cDFuncs.getChartDataFromFidPcPidMap(parsedCSV, dataMapping),
                 //chartsPerRow: 2
             }
         });

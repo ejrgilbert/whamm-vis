@@ -42,12 +42,17 @@ export function isGraphChartData(data: chartData): data is graphChartData {
 export type chartData = pieChartData | graphChartData;
 
 /**
+ * A map from `fid` to a map from `pc` to a map from `probe_id` to a CSVRow[]
+ */
+export type FidPcPidMap = Map<number, Map<number, Map<string, CSVRow[]>>>;
+
+/**
  * Formats the data in the map to a format usable by the chart displayers 
  * @param fidToPcToPidToLine A map from *Function ID* to *Program Counter* to *Probe ID* to an array of {@link parseCSV.CSVRow}
  * @param mapping A function which takes an array of {@link parseCSV.CSVRow} and maps it to a {@link chartData}
  * @returns A {@link chartData} array
  */
-export function getChartDataFromMap(fidToPcToPidToLine: Map<number, Map<number, Map<string, CSVRow[]>>>, mapping: (lines: CSVRow[]) => chartData): chartData[]{
+export function getChartDataFromFidPcPidMap(fidToPcToPidToLine: FidPcPidMap, mapping: (lines: CSVRow[]) => chartData): chartData[]{
 
     let output: chartData[] = [];
 
@@ -65,7 +70,7 @@ export function getChartDataFromMap(fidToPcToPidToLine: Map<number, Map<number, 
  * @param mapping A function which takes an array of {@link parseCSV.CSVRow} and maps it to a {@link chartData}
  * @returns A {@link chartData} array
  */
-export function getChartDataByFid(fidToPcToPidToLine: Map<number, Map<number, Map<string, CSVRow[]>>>, fid: number, mapping: (lines: CSVRow[]) => chartData): chartData[]{
+export function getChartDataByFid(fidToPcToPidToLine: FidPcPidMap, fid: number, mapping: (lines: CSVRow[]) => chartData): chartData[]{
     let output: chartData[] = [];
     let innerMap = fidToPcToPidToLine.get(fid);
     if (!innerMap) {return output;}
@@ -84,7 +89,7 @@ export function getChartDataByFid(fidToPcToPidToLine: Map<number, Map<number, Ma
  * @param mapping A function which takes an array of {@link parseCSV.CSVRow} and maps it to a {@link chartData}
  * @returns A {@link chartData} array
  */
-export function getChartDataByFidAndPc(fidToPcToPidToLine: Map<number, Map<number, Map<string, CSVRow[]>>>, fid: number, pc: number, mapping: (lines: CSVRow[]) => chartData): chartData[]{
+export function getChartDataByFidAndPc(fidToPcToPidToLine: FidPcPidMap, fid: number, pc: number, mapping: (lines: CSVRow[]) => chartData): chartData[]{
     let output: chartData[] = [];
     let innerMap = fidToPcToPidToLine.get(fid);
     if (!innerMap) {return output;}
@@ -106,8 +111,8 @@ export function getChartDataByFidAndPc(fidToPcToPidToLine: Map<number, Map<numbe
  * @param csvContent The CSV content
  * @returns A map from `fid` to a map from `pc` to a map from `probe_id` to a CSVRow[]
  */
-export function organizeCSVByFidPcPid(csvContent: CSVRow[]): Map<number, Map<number, Map<string, CSVRow[]>>>{
-    const fidToPcToPidToLine: Map<number, Map<number, Map<string, CSVRow[]>>> = new Map();
+export function organizeCSVByFidPcPid(csvContent: CSVRow[]): FidPcPidMap{
+    const fidToPcToPidToLine: FidPcPidMap = new Map();
         for (const line of csvContent) {
             // Ensure the keys we need for grouping exist and are valid.
             if (line.fid === undefined || line.pc === undefined || line.probe_id === undefined) {
@@ -143,19 +148,14 @@ export function organizeCSVByFidPcPid(csvContent: CSVRow[]): Map<number, Map<num
 
 /**
  * Organizes the CSVRow[] by the first key of the map
- * @param csvContent An array of CSVRow where "value(s)" is of the format [key1, [keys, value]]
- * @returns A map from the first key to CSVRow[]
+ * @param csvContent An array of CSVRow where "value(s)" is of the format [[key 1, key 2], value]
+ * @returns A map from the the keys to the value
  */
-export function organizeCSVByValue(csvContent: CSVRow[]): Map<any, CSVRow[]>{
-    let output: Map<any, CSVRow[]> = new Map();
-    for (let row of csvContent){
-        let index = row["value(s)"][0];
-        let valueArray = output.get(index);
-        if (!valueArray){
-            valueArray = [];
-            output.set(index, valueArray);
-        }
-        valueArray.push(row);
+export function formatCSVMap(rows: CSVRow[]): Map<any, any>{
+    let output: Map<[number, number], number> = new Map();
+    for (let row of rows){
+        let values: [any, any] = row["value(s)"];
+        output.set(values[0], values[1]);
     }
     return output;
 }

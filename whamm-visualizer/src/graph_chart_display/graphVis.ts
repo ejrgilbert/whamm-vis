@@ -40,7 +40,7 @@ export function graphDisplay(context: vscode.ExtensionContext): vscode.Disposabl
 
         // Option 2: Use the file content
         const csvContent = editor.document.getText();
-        parsedCSV = cDFuncs.organizeCSVByValue(parseCSV.parseFromString(csvContent));
+        parsedCSV = parseCSV.parseFromString(csvContent);
 
         
 
@@ -51,7 +51,7 @@ export function graphDisplay(context: vscode.ExtensionContext): vscode.Disposabl
         panel.webview.postMessage({
             command: 'updateChartData',
             payload: {
-                chartData: cDFuncs.getGraphChartData(refactorFix(parsedCSV)),
+                chartData: cDFuncs.getGraphChartData(cDFuncs.formatCSVMap(parsedCSV)),
                 title: filePath.split('/').pop() || filePath.split('\\').pop(),
                 selfLoopSVG: selfLoopSVG
             }
@@ -64,7 +64,7 @@ export function graphDisplay(context: vscode.ExtensionContext): vscode.Disposabl
     });
 }
 
-let parsedCSV: Map<any, parseCSV.CSVRow[]>;
+let parsedCSV: parseCSV.CSVRow[];
 
 /**
  * 
@@ -127,14 +127,14 @@ function getNonce() {
 }
 
 
-function refactorFix(parsedCSV: Map<any, parseCSV.CSVRow[]>): Map<[number, number], number>{
-    let output: Map<[number, number], number> = new Map();
-    for (let key of Array.from(parsedCSV.keys())){
-        let rows = parsedCSV.get(key)!;
-        for (let row of rows){
-            let values: [any, [any, any]] = row["value(s)"];
-            output.set(values[1][0], values[1][1]);
-        }
-    }
-    return output;
-}
+// function refactorFix(parsedCSV: Map<any, parseCSV.CSVRow[]>): Map<[number, number], number>{
+//     let output: Map<[number, number], number> = new Map();
+//     for (let key of Array.from(parsedCSV.keys())){
+//         let rows = parsedCSV.get(key)!;
+//         for (let row of rows){
+//             let values: [any, [any, any]] = row["value(s)"];
+//             output.set(values[1][0], values[1][1]);
+//         }
+//     }
+//     return output;
+// }
