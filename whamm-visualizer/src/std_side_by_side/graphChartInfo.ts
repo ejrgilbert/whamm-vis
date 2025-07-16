@@ -1,8 +1,7 @@
-import { chartInfoTemplate } from "./chartInfoTemplate";
+import { ChartInfoTemplate } from "./chartInfoTemplate";
 import * as cDFuncs from '../chartDataFunctions';
 import * as parseCSV from '../parseCSV';
 import { WebviewPanel } from "vscode";
-import { getSVGPath } from "../graph_chart_display/svgPathParser";
 
 type graphPayload = {
     chartData: cDFuncs.graphChartData[],
@@ -10,12 +9,12 @@ type graphPayload = {
     selfLoopSVG: string;
 }
 
-export class graphInfo extends chartInfoTemplate<graphPayload>{
+export class GraphChartInfo extends ChartInfoTemplate<graphPayload>{
 
-    readonly chartScriptFileName: string = 'graph.js';
+    public chartScriptFileName(): string { return 'graph.js';}
 
-    constructor(parsedCSV: parseCSV.CSVRow[], fileName: string, selfLoopSVG: string){
-        super(parsedCSV);
+    constructor(parsedCSV: parseCSV.CSVRow[], panel: WebviewPanel, fileName: string, selfLoopSVG: string){
+        super(parsedCSV, panel);
         this.fileName = fileName;
         this.selfLoopSVG = selfLoopSVG;
         this.organizedCSV = cDFuncs.formatCSVMap(parsedCSV);
@@ -55,13 +54,13 @@ export class graphInfo extends chartInfoTemplate<graphPayload>{
         return payload;
     }
 
-    onCodeSelectedFidPc(payload: { selectedFid: number; selectedPc: number; }, panel: WebviewPanel): void {
-        if (payload.selectedFid !== -1){
+    onCodeSelectedFidPc(selectedFid: number, selectedPc: number ): void {
+        if (selectedFid !== -1){
             
-            panel.webview.postMessage({
+            this.panel.webview.postMessage({
                 command: 'selectNode',
                 payload: {
-                    selectedNode: payload.selectedFid
+                    selectedNode: selectedFid
                 }
             });
         }

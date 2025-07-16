@@ -1,4 +1,4 @@
-import { chartInfoTemplate } from "./chartInfoTemplate";
+import { ChartInfoTemplate } from "./chartInfoTemplate";
 import * as cDFuncs from '../chartDataFunctions';
 import * as parseCSV from '../parseCSV';
 import { WebviewPanel } from "vscode";
@@ -7,12 +7,12 @@ type pieChartPayload = {
     chartData: cDFuncs.pieChartData[]
 }
 
-export class pieChartInfo extends chartInfoTemplate<pieChartPayload>{
+export class PieChartInfo extends ChartInfoTemplate<pieChartPayload>{
 
-    readonly chartScriptFileName: string = 'pieChart.js';
+    public chartScriptFileName(): string { return 'pieChart.js';}
     
-    constructor(parsedCSV: parseCSV.CSVRow[]){
-        super(parsedCSV);
+    constructor(parsedCSV: parseCSV.CSVRow[], panel: WebviewPanel){
+        super(parsedCSV, panel);
         this.organizedCSV = cDFuncs.organizeCSVByFidPcPid(this.parsedCSV);
     }
        
@@ -20,25 +20,16 @@ export class pieChartInfo extends chartInfoTemplate<pieChartPayload>{
     protected organizedCSV: cDFuncs.FidPcPidMap;
 
     generateUpdateChartDataPayload(): pieChartPayload {
-        const chartData = cDFuncs.getChartDataFromFidPcPidMap(this.organizedCSV, this.dataMapping.bind(this)) as cDFuncs.pieChartData[];
+        const chartData = this.getChartData(-1, -1);
         return {
             chartData: chartData
         };
     }
-    onCodeSelectedFidPc(payload: { selectedFid: number; selectedPc: number; }, panel: WebviewPanel): void {
-        const { selectedFid, selectedPc } = payload;
-        let chartData: cDFuncs.pieChartData[];
+    
+    onCodeSelectedFidPc(selectedFid: number, selectedPc: number): void {
+        const chartData = this.getChartData(selectedFid, selectedPc);
 
-        
-        if (selectedFid === -1) { // No function selected, show all charts
-            chartData = cDFuncs.getChartDataFromFidPcPidMap(this.organizedCSV, this.dataMapping.bind(this)) as cDFuncs.pieChartData[];
-        } else if (selectedPc === -1) { // A function is selected, but no specific pc, show all charts for that function
-            chartData = cDFuncs.getChartDataByFid(this.organizedCSV, selectedFid, this.dataMapping.bind(this)) as cDFuncs.pieChartData[];
-        } else { // A specific line is selected, show only charts for that fid:pc
-            chartData = cDFuncs.getChartDataByFidAndPc(this.organizedCSV, selectedFid, selectedPc, this.dataMapping.bind(this)) as cDFuncs.pieChartData[];
-        }
-
-        panel.webview.postMessage({
+        this.panel.webview.postMessage({
             command: 'updateChartData',
             payload: {
                 chartData: chartData,
@@ -68,5 +59,15 @@ export class pieChartInfo extends chartInfoTemplate<pieChartPayload>{
         };
         lines.map(obj => entry.data.push({ value: obj['value(s)'], name: obj.name! }));
         return entry;
+    }
+
+    private getChartData(selectedFid: number, selectedPc: number): cDFuncs.pieChartData[] {
+        if (selectedFid === -1) { // No function selected, show all charts
+            return cDFuncs.getChartDataFromFidPcPidMap(this.organizedCSV, this.dataMapping.bind(this)) as cDFuncs.pieChartData[];
+        } else if (selectedPc === -1) { // A function is selected, but no specific pc, show all charts for that function
+            return cDFuncs.getChartDataByFid(this.organizedCSV, selectedFid, this.dataMapping.bind(this)) as cDFuncs.pieChartData[];
+        } else { // A specific line is selected, show only charts for that fid:pc
+            return cDFuncs.getChartDataByFidAndPc(this.organizedCSV, selectedFid, selectedPc, this.dataMapping.bind(this)) as cDFuncs.pieChartData[];
+        }
     }
 }

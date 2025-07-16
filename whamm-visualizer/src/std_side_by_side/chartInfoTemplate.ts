@@ -14,22 +14,32 @@
 
 */
 
-import * as vscode from 'vscode';
+import { WebviewPanel } from 'vscode';
 import * as parseCSV from '../parseCSV';
 import * as cDFuncs from '../chartDataFunctions';
 
-type fidPc ={
-    selectedFid: number,
-    selectedPc: number
+export interface HasScriptName {
+    /**
+     * The file name of the chart script as a string
+     * 
+     * Must be in context.extensionUri/media
+     */
+    readonly chartScriptFileName: string;
 }
 
 /**
  * A template for how the charts should be accessed
  */
-export abstract class chartInfoTemplate<Payload> {
+export abstract class ChartInfoTemplate<Payload> {
     
-    constructor(parsedCSV: parseCSV.CSVRow[]){
+    /**
+     * Constructor for the chartInfo classes
+     * @param parsedCSV The array of parsed CSV rows
+     * @param panel The vscode.WebviewPanel containing everything
+     */
+    constructor(parsedCSV: parseCSV.CSVRow[], panel: WebviewPanel){
         this.parsedCSV = parsedCSV;
+        this.panel = panel;
     }
 
     /**
@@ -38,29 +48,33 @@ export abstract class chartInfoTemplate<Payload> {
     protected parsedCSV: parseCSV.CSVRow[];
 
     /**
+     * The vscode.WebViewPanel containing everything
+     */
+    protected panel: WebviewPanel;
+
+    /**
      * The CSV organized to visualization specific format
      */
     protected organizedCSV: any;
 
     /**
-     * The file name of the chart script as a string
-     * 
      * Must be in context.extensionUri/media
+     * 
+     * @returns The file name of the chart script as a string
      */
-    abstract readonly chartScriptFileName: string;
+    abstract chartScriptFileName(): string;
 
     /**
      * Generates what is sent out to the chart
      * @return A payload object, may be different for each chart type
      */
-    abstract generateUpdateChartDataPayload(): Payload; 
+    abstract generateUpdateChartDataPayload(): Payload;
 
     /**
      * What happens when a Fid and Pc are selected in the code panel
      * @param payload The payload containing the selected fid and pc
-     * @param panel The vscode.WebviewPanel containing everything
      */
-    abstract onCodeSelectedFidPc(payload: fidPc, panel: vscode.WebviewPanel):  void;
+    abstract onCodeSelectedFidPc(selectedFid: number, selectedPc: number):  void;
 
     // /**
     //  * Maps from an Array of parseCSV.CSVRow to relevant chartData type

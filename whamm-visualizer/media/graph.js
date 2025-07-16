@@ -1,5 +1,5 @@
 
-(function () {
+function graphChart() {
     // Defer initialization until the DOM is ready and rendered to ensure the
     // container has its dimensions calculated by the browser.
     setTimeout(function () {
@@ -282,4 +282,4 @@
 
         
     }, 1);
-}());
+}
