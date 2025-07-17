@@ -77,7 +77,7 @@ function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri): s
     const echartsJsPath = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'node_modules', 'echarts', 'dist', 'echarts.min.js'));
 
     // Path to your custom script that initializes and renders the chart
-    const chartScriptPath = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'media', 'graph.js'));
+    const chartScriptPath = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'media', 'graphChart.js'));
 
     // Path to back button
     const backButtonPath = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'media', 'whamm!_logo.png'));

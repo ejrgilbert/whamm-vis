@@ -123,6 +123,7 @@ function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri) {
         <script type="module" src="${toolkitUri}" nonce="${nonce}"></script>
         <script nonce="${nonce}" src="${echartsJsPath}"></script>
         <script nonce="${nonce}" src="${chartScriptPath}"></script>
+        <script nonce="${nonce}"> window.chartFunctions.get('pie')() </script>
 
         <script nonce="${nonce}">
             // Encapsulate to avoid polluting global scope

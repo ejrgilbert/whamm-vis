@@ -304,8 +304,10 @@ function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri) {
                         <option value="pie">Pie Chart</option>
                         <option value="graph">Graph</option>
                     </select>
+                </div>  
+                <div id="outer-chart-container" style="flex: 1; min-height: 0;">
+                    <div id="chart-container"></div>
                 </div>
-                <div id="chart-container"></div>
             </div>
         </div>
 
@@ -316,6 +318,7 @@ function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri) {
         <script nonce="${nonce}" src="${echartsJsPath}"></script>
         <script type="module" nonce="${nonce}" src="${codeDisplayScriptPath}"></script>
 
+        <script nonce ="${nonce}"> window.chartFunctions = new Map() </script>
         <script nonce ="${nonce}" src="${chartPaths.get('default')}"></script>
         <script nonce ="${nonce}" src="${chartPaths.get('pie')}"></script>
         <script nonce ="${nonce}" src="${chartPaths.get('graph')}"></script>
@@ -323,29 +326,19 @@ function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri) {
         <script nonce="${nonce}">
             // Encapsulate to avoid polluting global scope
             (function() {
+                let cleanupCurrentChart = () => {};
 
                 function loadChart(chartType) {
-                    let chartScript;
-                    switch (chartType) {
-                        case 'pie':
-                            chartScript = pieChart;
-                            break;
-                        case 'graph':
-                            chartScript = graphChart;
-                            break;
-                        case 'default':
-                        default:
-                            chartScript = defaultChart;
-                            break;
-                    }
-                    const chart = echarts.getInstanceByDom(document.getElementById('chart-container'));
-                    if (chart) {
-                        // Clear previous chart
-                        echarts.dispose(chart);
-                    }
-                    chartScript();
+                    // 1. Clean up the old chart and its listeners
+                    cleanupCurrentChart();
 
+                    // 2. Load the new chart and get its cleanup function
+                    const chartInitializer = window.chartFunctions.get(chartType);
+                    if (chartInitializer) {
+                        cleanupCurrentChart = chartInitializer() || (() => {});
+                    }
                 }
+
                 loadChart('default');
 
                 const chartTypeSelect = document.getElementById('chart-type-select');
