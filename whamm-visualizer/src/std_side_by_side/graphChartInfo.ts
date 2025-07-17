@@ -11,19 +11,11 @@ type graphPayload = {
 
 export class GraphChartInfo extends ChartInfoTemplate<graphPayload>{
 
-    public chartScriptFileName(): string { return 'graphChart.js';}
-
     constructor(parsedCSV: parseCSV.CSVRow[], panel: WebviewPanel, fileName: string, selfLoopSVG: string){
-        super(parsedCSV, panel);
-        this.fileName = fileName;
+        super(parsedCSV, panel, fileName);
         this.selfLoopSVG = selfLoopSVG;
         this.organizedCSV = cDFuncs.formatCSVMap(parsedCSV);
     }
-
-    /**
-     * The file name of the .csv file
-     */
-    private readonly fileName: string;
 
     /**
      * The path data of the self loop SVG
@@ -51,6 +43,7 @@ export class GraphChartInfo extends ChartInfoTemplate<graphPayload>{
             selfLoopSVG: this.selfLoopSVG
         };
 
+        console.log(payload)
         return payload;
     }
 

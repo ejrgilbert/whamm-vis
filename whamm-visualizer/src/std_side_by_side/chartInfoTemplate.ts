@@ -16,16 +16,6 @@
 
 import { WebviewPanel } from 'vscode';
 import * as parseCSV from '../parseCSV';
-import * as cDFuncs from '../chartDataFunctions';
-
-export interface HasScriptName {
-    /**
-     * The file name of the chart script as a string
-     * 
-     * Must be in context.extensionUri/media
-     */
-    readonly chartScriptFileName: string;
-}
 
 /**
  * A template for how the charts should be accessed
@@ -37,32 +27,31 @@ export abstract class ChartInfoTemplate<Payload> {
      * @param parsedCSV The array of parsed CSV rows
      * @param panel The vscode.WebviewPanel containing everything
      */
-    constructor(parsedCSV: parseCSV.CSVRow[], panel: WebviewPanel){
+    constructor(parsedCSV: parseCSV.CSVRow[], panel: WebviewPanel, fileName: string){
         this.parsedCSV = parsedCSV;
         this.panel = panel;
+        this.fileName = fileName;
     }
 
     /**
      * The parsed CSV
      */
     protected parsedCSV: parseCSV.CSVRow[];
-
+    
     /**
      * The vscode.WebViewPanel containing everything
-     */
-    protected panel: WebviewPanel;
+    */
+   protected panel: WebviewPanel;
+   
+    /**
+    * The file name of the .csv file
+    */
+    public readonly fileName: string;
 
     /**
      * The CSV organized to visualization specific format
      */
     protected organizedCSV: any;
-
-    /**
-     * Must be in context.extensionUri/media
-     * 
-     * @returns The file name of the chart script as a string
-     */
-    abstract chartScriptFileName(): string;
 
     /**
      * Generates what is sent out to the chart

@@ -14,11 +14,7 @@
     // Defer initialization to allow the DOM to render.
     const timeoutId = setTimeout(function () {
 
-      const chart = echarts.getInstanceByDom(document.getElementById('chart-container'));
-      if (chart) {
-          // Clear previous chart
-          echarts.dispose(chart);
-      }
+      
 
       // Initialize ECharts instance
       const chartDom = document.getElementById('chart-container');
@@ -258,7 +254,7 @@
         chart.dispose();
       }
        // If you had window listeners set up inside pieChart function, you would remove them here:
-      //  window.removeEventListener('resize', handleResize);
+      window.removeEventListener('resize', handleResize);
       window.removeEventListener('message', handleMessage);
     };
   }

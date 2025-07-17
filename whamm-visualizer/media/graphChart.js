@@ -6,27 +6,30 @@
     window.chartFunctions.set('graph', graphChart);
 
     let handleMessage;
+    let handleResize;
+
 
     function graphChart() {
         // Defer initialization to allow the DOM to render.
         const timeoutId = setTimeout(function () {
 
-            const chart = echarts.getInstanceByDom(document.getElementById('chart-container'));
-            if (chart) {
-                // Clear previous chart
-                echarts.dispose(chart);
-            }
+            
 
             // Initialize ECharts instance
             const chartDom = document.getElementById('chart-container');
             const outerChartDom = document.getElementById('outer-chart-container');
             
-            console.log(outerChartDom.clientHeight);
             chartDom.style.height = outerChartDom.clientHeight + 'px';
             
             var myChart = echarts.init(chartDom, 'dark');;
 
             const nodePrefix = "FID: ";
+
+            handleResize = () => {
+                chartDom.style.height = outerChartDom.clientHeight + 'px';
+                myChart.resize();
+            };
+            window.addEventListener('resize', handleResize);
 
             // Recieves the messages
             handleMessage = event => {
@@ -315,6 +318,7 @@
             chart.dispose();
         }
         // If you had window listeners set up inside pieChart function, you would remove them here:
+        window.removeEventListener('resize', handleResize);
         window.removeEventListener('message', handleMessage);
         };
     }

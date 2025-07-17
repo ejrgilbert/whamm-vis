@@ -8,6 +8,7 @@ import { ChartInfoTemplate } from './chartInfoTemplate';
 import { PieChartInfo } from './pieChartInfo';
 import { GraphChartInfo } from './graphChartInfo';
 import { DefaultChartInfo } from './defaultChartInfo';
+import { stringStream } from 'cheerio';
 
 
 /**
@@ -43,40 +44,38 @@ export function stdSideBySideDisplay(context: vscode.ExtensionContext): vscode.D
         let fileUri = editor.document.uri;
         const filePath = fileUri.fsPath;
         const fileExtension = filePath.split('.').pop();
-        const fileName = filePath.split('/').pop()! || filePath.split('\\').pop()!;
         switch (fileExtension){
             case 'csv':
+                currentCSVFileName = filePath.split('/').pop()! || filePath.split('\\').pop()!;
                 // Option 1: Use the file path
                 parsedCSV = parseCSV.parseFromFile(filePath);
                 // Option 2: Use the file content
                 // const csvContent = editor.document.getText();
                 // parsedCSV = parseCSV.fidPcPidMapFromString(csvContent);
 
-                currentChartOption = 'default'; // Initialize currentChartOption
-                chartOptions = generateChartOptions(parsedCSV, fileName, panel, context);
-
                 // Send the initial file name to the webview
                 panel.webview.postMessage({
                     command: 'updateCsvFileName',
-                    payload: { fileName: fileName }
+                    payload: { fileName: currentCSVFileName }
                 });
 
                 // Send data to the webview
-                const chartInfo = chartOptions.get(currentChartOption);
-                const payload = chartInfo?.generateUpdateChartDataPayload();
+                const chartInfo = getChartInfo(currentChartOption, parsedCSV, currentCSVFileName, panel, context);
+                const payload = chartInfo.generateUpdateChartDataPayload();
+                console.log(payload);
                 panel.webview.postMessage({
                     command: 'updateChartData',
                     payload: payload
                 });
                 break;
             case 'wat':
-                chartOptions = generateChartOptions([], fileName, panel, context);
+                currentWATFileName = filePath.split('/').pop()! || filePath.split('\\').pop()!;
 
                 const newWatContentArray = await vscode.workspace.fs.readFile(fileUri);
                 const newWatContent = newWatContentArray.toString();
                 panel.webview.postMessage({
                     command: 'updateWatFileName',
-                    payload: { fileName: fileName }
+                    payload: { fileName: currentWATFileName }
                 });
                 const lineToFidPc = organizeLineNumbers(newWatContent);
                 panel.webview.postMessage({
@@ -118,7 +117,7 @@ export function stdSideBySideDisplay(context: vscode.ExtensionContext): vscode.D
                         if (fileUri && fileUri[0]) {
                             fileUri = fileUri[0];
                             const filePath = fileUri.fsPath;
-                            const fileName = filePath.split('/').pop()! || filePath.split('\\').pop()!;
+                            currentCSVFileName = filePath.split('/').pop()! || filePath.split('\\').pop()!;
 
                             const newCsvContent = await vscode.workspace.fs.readFile(fileUri);
                             const newParsedCSV = parseCSV.parseFromString(newCsvContent.toString());
@@ -126,21 +125,16 @@ export function stdSideBySideDisplay(context: vscode.ExtensionContext): vscode.D
                             // Update the global parsedCSV for this panel instance
                             parsedCSV = newParsedCSV;
 
-                            chartOptions = generateChartOptions(parsedCSV, fileName, panel, context);
-
                             panel.webview.postMessage({
                                 command: 'updateCsvFileName',
-                                payload: { fileName: fileName }
+                                payload: { fileName: currentCSVFileName }
                             });
 
-                            const chartInfo = chartOptions.get(currentChartOption);
-                            const payload = chartInfo?.generateUpdateChartDataPayload();
+                            const chartInfo = getChartInfo(currentChartOption, parsedCSV, currentCSVFileName, panel, context);
+                            const payload = chartInfo.generateUpdateChartDataPayload();
                             panel.webview.postMessage({
                                 command: 'updateChartData',
-                                payload: {
-                                    ...payload,
-                                    chartScriptFileName: chartInfo?.chartScriptFileName
-                                }
+                                payload: payload
                             });
                         }
                         return;
@@ -159,10 +153,10 @@ export function stdSideBySideDisplay(context: vscode.ExtensionContext): vscode.D
                             const newWatContentArray = await vscode.workspace.fs.readFile(fileUri[0]);
                             const newWatContent = newWatContentArray.toString();
                             // Extract the file name from the URI
-                            const fileName = fileUri[0].fsPath.split('/').pop() || fileUri[0].fsPath.split('\\').pop();
+                            currentWATFileName = fileUri[0].fsPath.split('/').pop()! || fileUri[0].fsPath.split('\\').pop()!;
                             panel.webview.postMessage({
                                 command: 'updateWatFileName',
-                                payload: { fileName: fileName }
+                                payload: { fileName: currentWATFileName }
                             });
                             const lineToFidPc = organizeLineNumbers(newWatContent);
                             panel.webview.postMessage({
@@ -181,7 +175,7 @@ export function stdSideBySideDisplay(context: vscode.ExtensionContext): vscode.D
                         }
                         selectedFid = message.payload.selectedFid;
                         selectedPc = message.payload.selectedPc;
-                        chartOptions.get(currentChartOption)?.onCodeSelectedFidPc(selectedFid, selectedPc);
+                        getChartInfo(currentChartOption, parsedCSV, currentCSVFileName, panel, context).onCodeSelectedFidPc(selectedFid, selectedPc);
 
                         return;
                     case 'chartSelectedFidPc':
@@ -211,8 +205,8 @@ export function stdSideBySideDisplay(context: vscode.ExtensionContext): vscode.D
                         return;
                     case 'loadNewChart':
                         currentChartOption = message.payload.newType;
-                        const chartInfo = chartOptions.get(currentChartOption);
-                        const payload = chartInfo?.generateUpdateChartDataPayload();
+                        const chartInfo = getChartInfo(currentChartOption, parsedCSV, currentCSVFileName, panel, context);
+                        const payload = chartInfo.generateUpdateChartDataPayload();
                         panel.webview.postMessage({
                             command: 'updateChartData',
                             payload: payload
@@ -231,7 +225,7 @@ export function stdSideBySideDisplay(context: vscode.ExtensionContext): vscode.D
                     case 'resetChart':
                         panel.webview.postMessage({
                             command: 'updateChartData',
-                            payload: chartOptions.get(currentChartOption)?.generateUpdateChartDataPayload()
+                            payload: getChartInfo(currentChartOption, parsedCSV, currentCSVFileName, panel, context).generateUpdateChartDataPayload()
                         });
                     return;
                     }
@@ -250,8 +244,11 @@ let parsedCSV: parseCSV.CSVRow[];
 let lineToFidPc: Map<number, [number, number]>;
 let fidPcToLine: Map<number, Map<number, number>>;
 
-let chartOptions: Map<string, ChartInfoTemplate<any>>;
+let chartOptions: Map<string, [string, ChartInfoTemplate<any> | undefined]>;
 let currentChartOption: string = 'default';
+
+let currentCSVFileName: string;
+let currentWATFileName: string;
 
 function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri) {
     // Path to the ECharts library within your extension
@@ -274,7 +271,6 @@ function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri) {
     // Content Security Policy (CSP) to allow only specific scripts
     const nonce = getNonce();
     // Path to the script that initializes and renders the chart
-    const chartPaths = getChartPaths(webview, extensionUri);
     return `<!DOCTYPE html>
     <html lang="en">
     <head>
@@ -312,16 +308,12 @@ function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri) {
         </div>
 
         <script nonce="${nonce}">  window.vscode = acquireVsCodeApi(); </script>
-        <script nonce="${nonce}"> window.BACK_BUTTON_PATH = '${backButtonPath}'; </script>
-        <script nonce="${nonce}"> window.chartPaths = ${JSON.stringify(Object.fromEntries(chartPaths))}; </script>
         <script type="module" nonce="${nonce}" src="${toolkitUri}"></script>
         <script nonce="${nonce}" src="${echartsJsPath}"></script>
         <script type="module" nonce="${nonce}" src="${codeDisplayScriptPath}"></script>
 
         <script nonce ="${nonce}"> window.chartFunctions = new Map() </script>
-        <script nonce ="${nonce}" src="${chartPaths.get('default')}"></script>
-        <script nonce ="${nonce}" src="${chartPaths.get('pie')}"></script>
-        <script nonce ="${nonce}" src="${chartPaths.get('graph')}"></script>
+        ${generateChartScriptElements(nonce, webview, extensionUri)};
 
         <script nonce="${nonce}">
             // Encapsulate to avoid polluting global scope
@@ -459,19 +451,52 @@ function organizeLineNumbers(newWatContent: string): Map<number, [number, number
     return output;
 }
 
-//TODO Make this actually useful
-function generateChartOptions(parsedCSV: parseCSV.CSVRow[], fileName: string, panel: vscode.WebviewPanel, context: vscode.ExtensionContext): Map<string, ChartInfoTemplate<any>>{
-    return new Map<string, ChartInfoTemplate<any>>([
-        ['default', new DefaultChartInfo(parsedCSV, panel)],
-        ['pie', new PieChartInfo(parsedCSV, panel)],
-        ['graph', new GraphChartInfo(parsedCSV, panel, fileName, getSVGPath(vscode.Uri.joinPath(context.extensionUri, 'media', 'svg_files', 'selfLoop.svg')))]
+// TODO Make this actually useful
+function generateChartOptions(): Map<string, [string, ChartInfoTemplate<any> | undefined]>{
+    return new Map<string, [string, ChartInfoTemplate<any> | undefined]>([
+        ['default', ['defaultChart.js', undefined]],
+        ['pie', ['pieChart.js', undefined]],
+        ['graph', ['graphChart.js', undefined]]
     ]);
 }
 
-function getChartPaths(webview: vscode.Webview, extensionUri: vscode.Uri): Map<string, vscode.Uri>{
-    return new Map<string, vscode.Uri>([
-        ['default', webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'media', DefaultChartInfo.prototype.chartScriptFileName()))],
-        ['pie', webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'media', PieChartInfo.prototype.chartScriptFileName()))],
-        ['graph', webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'media', GraphChartInfo.prototype.chartScriptFileName()))]
-    ]);
+function generateChartScriptElements(nonce: string, webview: vscode.Webview, extensionUri: vscode.Uri): string{
+    let output: string = '';
+    let template: (str: string) => string = (str:string) => `<script nonce="${nonce}" src="${webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'media', str))}"></script>\n`;
+
+    if (!chartOptions){
+        chartOptions = generateChartOptions();
+    }
+    for (let key of Array.from(chartOptions.keys())){
+        output += template(chartOptions.get(key)![0]);
+    }
+    return output;
+}
+
+function getChartInfo(chartType: string, parsedCSV: parseCSV.CSVRow[], fileName: string, panel: vscode.WebviewPanel, context: vscode.ExtensionContext): ChartInfoTemplate<any>{
+    if (!chartOptions){
+        chartOptions = generateChartOptions();
+    }
+    
+    let chartTuple = chartOptions.get(chartType);
+
+    if (!chartTuple){
+        throw new Error("Invalid chartType in getChartInfo");
+    }
+
+    if (!chartTuple[1] || chartTuple[1].fileName !== fileName){
+        
+        switch (chartType){
+            case "pie":
+                chartTuple[1] = new PieChartInfo(parsedCSV, panel, fileName);
+                break;
+            case "graph":
+                chartTuple[1] = new GraphChartInfo(parsedCSV, panel, fileName, getSVGPath(vscode.Uri.joinPath(context.extensionUri, 'media', 'svg_files', 'selfLoop.svg')));
+                break;
+            case "default":
+            default:
+                chartTuple[1] = new DefaultChartInfo(parsedCSV, panel, fileName);
+        }
+    }
+    return chartTuple[1];
 }

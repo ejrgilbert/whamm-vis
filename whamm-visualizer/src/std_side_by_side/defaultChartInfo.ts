@@ -5,10 +5,8 @@ import { WebviewPanel } from "vscode";
 
 export class DefaultChartInfo extends ChartInfoTemplate<void>{
 
-    public chartScriptFileName(): string { return 'defaultChart.js';}
-
-    constructor(parsedCSV: parseCSV.CSVRow[], panel: WebviewPanel){
-        super(parsedCSV, panel);
+    constructor(parsedCSV: parseCSV.CSVRow[], panel: WebviewPanel, fileName: string){
+        super(parsedCSV, panel, fileName);
         this.organizedCSV = null;
     }
 
@@ -16,6 +14,7 @@ export class DefaultChartInfo extends ChartInfoTemplate<void>{
     protected organizedCSV: null;
 
     generateUpdateChartDataPayload(): void {
+        
     }
 
     onCodeSelectedFidPc(selectedFid: number, selectedPc: number): void {

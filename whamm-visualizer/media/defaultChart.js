@@ -5,24 +5,25 @@
     }
     window.chartFunctions.set('default', defaultChart);
 
+    let handleResize;
+
+
     function defaultChart() {
         // Defer initialization until the DOM is ready and rendered to ensure the
         // container has its dimensions calculated by the browser.
-        setTimeout(function () {
-
-            const chart = echarts.getInstanceByDom(document.getElementById('chart-container'));
-            if (chart) {
-                // Clear previous chart
-                echarts.dispose(chart);
-            }
-
+        const timeoutId = setTimeout(function () {
             
             // Initialize ECharts instance
             const chartDom = document.getElementById('chart-container');
             const outerChartDom = document.getElementById('outer-chart-container');
             
-            console.log(outerChartDom.clientHeight);
             chartDom.style.height = outerChartDom.clientHeight + 'px';
+            
+            handleResize = () => {
+                chartDom.style.height = outerChartDom.clientHeight + 'px';
+                myChart.resize();
+            };
+            window.addEventListener('resize', handleResize);
             
             var myChart = echarts.init(chartDom, 'dark');
 
@@ -77,5 +78,18 @@
             };
             myChart.setOption(option);
         }, 1);
+        // --- Return a cleanup function ---
+        return function cleanup() {
+        clearTimeout(timeoutId);
+        const chart = echarts.getInstanceByDom(document.getElementById('chart-container'));
+        if (chart) {
+            // Event listeners are bound to the chart instance, so disposing the chart should be enough.
+            // If they were on `window`, we would need to remove them explicitly.
+            // For this implementation, we can just dispose the chart.
+            chart.dispose();
+        }
+        // If you had window listeners set up inside pieChart function, you would remove them here:
+        window.removeEventListener('resize', handleResize);
+        };
     }
 }());

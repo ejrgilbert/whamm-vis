@@ -8,11 +8,9 @@ type pieChartPayload = {
 }
 
 export class PieChartInfo extends ChartInfoTemplate<pieChartPayload>{
-
-    public chartScriptFileName(): string { return 'pieChart.js';}
     
-    constructor(parsedCSV: parseCSV.CSVRow[], panel: WebviewPanel){
-        super(parsedCSV, panel);
+    constructor(parsedCSV: parseCSV.CSVRow[], panel: WebviewPanel, fileName: string){
+        super(parsedCSV, panel, fileName);
         this.organizedCSV = cDFuncs.organizeCSVByFidPcPid(this.parsedCSV);
     }
        
@@ -20,6 +18,7 @@ export class PieChartInfo extends ChartInfoTemplate<pieChartPayload>{
     protected organizedCSV: cDFuncs.FidPcPidMap;
 
     generateUpdateChartDataPayload(): pieChartPayload {
+        
         const chartData = this.getChartData(-1, -1);
         return {
             chartData: chartData
