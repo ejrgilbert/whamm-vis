@@ -62,5 +62,4 @@ body {
     flex-direction: column;
     overflow-y: auto; /* Allow chart-container to scroll vertically if content overflows */
     overflow-x: hidden; /* Prevent horizontal scroll on chart-container unless necessary */
-    min-height: fit-content;
   }

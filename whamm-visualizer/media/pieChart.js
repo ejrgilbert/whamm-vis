@@ -63,6 +63,9 @@
 
       // Focuses on target chart when double clicked or returns to base view
       const handleDblClick = function (params) {
+        // Hide the tooltip to prevent errors when the chart is re-rendered.
+        myChart.dispatchAction({ type: 'hideTip' });
+
         if (!focused){
           cachedOption = myChart.getOption();
           updateChart([{data: cachedOption.series[params.seriesIndex].data,
