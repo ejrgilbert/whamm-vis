@@ -65,10 +65,13 @@ export abstract class ChartInfoTemplate<Payload> {
      */
     abstract onCodeSelectedFidPc(selectedFid: number, selectedPc: number):  void;
 
-    // /**
-    //  * Maps from an Array of parseCSV.CSVRow to relevant chartData type
-    //  * @param lines 
-    //  * @returns
-    //  */
-    // abstract dataMapping(lines: parseCSV.CSVRow[]): cDFuncs.chartData;
+    /**
+     * Generates a chart specific dropdown
+     */
+    abstract generateDropdown(): string;
+
+    /**
+     * What should happen when the chart specific dropdown changes
+     */
+    abstract onDropdownChange(selectedValue: string): void;
 }

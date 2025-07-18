@@ -42,6 +42,11 @@
         "command": "whamm-visualizer.open-side-by-side-generic",
         "category": "Whamm Visualizer",
         "title": "Open Standard Side By Side Display"
+      },
+      {
+        "command": "whamm-visualizer.open-display-generic",
+        "category": "Whamm Visualizer",
+        "title": "Open Standard Display"
       }
     ]
   },

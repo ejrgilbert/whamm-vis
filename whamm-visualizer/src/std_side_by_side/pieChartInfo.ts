@@ -9,13 +9,32 @@ type pieChartPayload = {
 
 export class PieChartInfo extends ChartInfoTemplate<pieChartPayload>{
     
+    generateDropdown(): string {
+        let output = '<label for="chart-specific-dropdown">Choose FID</label>';
+        output += '<select id="chart-specific-dropdown">';
+        for (let fid of this.fids){
+            output += `<option value="${fid}">${fid}</option>\n`;
+        }
+        output += '</select>';
+        return output;
+    }
+    onDropdownChange(selectedValue: string): void {
+        this.onCodeSelectedFidPc(Number.parseInt(selectedValue), -1);
+    }
+
     constructor(parsedCSV: parseCSV.CSVRow[], panel: WebviewPanel, fileName: string){
         super(parsedCSV, panel, fileName);
         this.organizedCSV = cDFuncs.organizeCSVByFidPcPid(this.parsedCSV);
+        this.fids = Array.from(this.organizedCSV.keys()).sort((a, b) => a - b);
     }
        
 
     protected organizedCSV: cDFuncs.FidPcPidMap;
+
+    /**
+     * An array of all available fids
+     */
+    private fids: number[];
 
     generateUpdateChartDataPayload(): pieChartPayload {
         

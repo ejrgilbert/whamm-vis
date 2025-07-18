@@ -1,6 +1,5 @@
 import * as parseCSV from '../parseCSV';
 import * as cDFuncs from '../chartDataFunctions';
-import {FSM} from '../wat_parser/fsm';
 import {getSVGPath} from '../graph_chart_display/svgPathParser';
 import * as vscode from 'vscode';
 
@@ -16,12 +15,12 @@ import * as cTM from './chartTemplateManager';
  * @param context
  * @returns A vscode extension command containing a chart alongside a code display
  */
-export function stdSideBySideDisplay(context: vscode.ExtensionContext): vscode.Disposable{
-    return vscode.commands.registerCommand('whamm-visualizer.open-side-by-side-generic', async () => {        
+export function stdDisplay(context: vscode.ExtensionContext): vscode.Disposable{
+    return vscode.commands.registerCommand('whamm-visualizer.open-display-generic', async () => {        
         
         const panel = vscode.window.createWebviewPanel(
-            'Standard Side by Side',
-            'Side by Side Output',
+            'Standard Display',
+            'Display Output',
             vscode.ViewColumn.One,
             {
                 // Enable scripts in the webview
@@ -68,26 +67,8 @@ export function stdSideBySideDisplay(context: vscode.ExtensionContext): vscode.D
                     payload: payload
                 });
                 break;
-            case 'wat':
-                currentWATFileName = filePath.split('/').pop()! || filePath.split('\\').pop()!;
-
-                const newWatContentArray = await vscode.workspace.fs.readFile(fileUri);
-                const newWatContent = newWatContentArray.toString();
-                panel.webview.postMessage({
-                    command: 'updateWatFileName',
-                    payload: { fileName: currentWATFileName }
-                });
-                const lineToFidPc = organizeLineNumbers(newWatContent);
-                panel.webview.postMessage({
-                    command: 'updateWatContent',
-                    payload: {
-                        newCode: newWatContent,
-                        lineToFidPc: Object.fromEntries(lineToFidPc) // Cannot transmit Maps
-                    }
-                });
-                break;
             default:
-                vscode.window.showErrorMessage('Please open with a CSV or WAT file');
+                vscode.window.showErrorMessage('Please open with a CSV file');
                 return;
         }
         // Handle messages from the webview
@@ -138,36 +119,6 @@ export function stdSideBySideDisplay(context: vscode.ExtensionContext): vscode.D
                             });
                         }
                         return;
-                    case 'chooseWat':
-                        options = {
-                            canSelectMany: false,
-                            openLabel: 'Select Wat',
-                            filters: {
-                                'Wat files': ['wat']
-                            }
-                        };
-
-                        fileUri = await vscode.window.showOpenDialog(options);
-
-                        if (fileUri && fileUri[0]) {
-                            const newWatContentArray = await vscode.workspace.fs.readFile(fileUri[0]);
-                            const newWatContent = newWatContentArray.toString();
-                            // Extract the file name from the URI
-                            currentWATFileName = fileUri[0].fsPath.split('/').pop()! || fileUri[0].fsPath.split('\\').pop()!;
-                            panel.webview.postMessage({
-                                command: 'updateWatFileName',
-                                payload: { fileName: currentWATFileName }
-                            });
-                            const lineToFidPc = organizeLineNumbers(newWatContent);
-                            panel.webview.postMessage({
-                                command: 'updateWatContent',
-                                payload: {
-                                    newCode: newWatContent,
-                                    lineToFidPc: Object.fromEntries(lineToFidPc) //Cannot transmit Maps
-                                }
-                            });
-                        }
-                        return;
                     case 'codeSelectedFidPc':
                         if (!parsedCSV) {
                             vscode.window.showInformationMessage('Please choose a CSV file to see visualization data.');
@@ -177,31 +128,6 @@ export function stdSideBySideDisplay(context: vscode.ExtensionContext): vscode.D
                         selectedPc = message.payload.selectedPc;
                         getChartInfo(currentChartOption, parsedCSV, currentCSVFileName, panel, context).onCodeSelectedFidPc(selectedFid, selectedPc);
 
-                        return;
-                    case 'chartSelectedFidPc':
-                        if (!lineToFidPc) {
-                            vscode.window.showInformationMessage('Please choose a WAT file to see code data.');
-                            return;
-                        }
-
-                        selectedFid = Number.parseInt(message.payload.selectedFid);
-                        selectedPc = Number.parseInt(message.payload.selectedPc);
-
-                        if (selectedFid === -1 && selectedPc === -1){
-                            panel.webview.postMessage({
-                                command: 'updateCodeScroll',
-                                payload: {
-                                    lineNumber: -1
-                                }
-                            });
-                        } else {
-                            panel.webview.postMessage({
-                                command: 'updateCodeScroll',
-                                payload: {
-                                    lineNumber: fidPcToLine.get(selectedFid)?.get(selectedPc)
-                                }
-                            });
-                        }
                         return;
                     case 'loadNewChart':
                         currentChartOption = message.payload.newType;
@@ -251,29 +177,21 @@ export function stdSideBySideDisplay(context: vscode.ExtensionContext): vscode.D
 }
 
 let parsedCSV: parseCSV.CSVRow[];
-let lineToFidPc: Map<number, [number, number]>;
-let fidPcToLine: Map<number, Map<number, number>>;
 
 let chartOptions: Map<string, [string, cTM.ChartInfoTemplate<any> | undefined]>;
 let currentChartOption: string = 'default';
 
 let currentCSVFileName: string;
-let currentWATFileName: string;
 
 function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri) {
     // Path to the ECharts library within your extension
     const echartsJsPath = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'node_modules', 'echarts', 'dist', 'echarts.min.js'));
  
-
     // Path to the style sheet
     const styleSheetPath = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'media', 'styles.css'));
 
     // Path to the VS Code Webview UI Toolkit script
     const toolkitUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'node_modules', '@vscode', 'webview-ui-toolkit', 'dist', 'toolkit.js'));
-
-    // Path to the code display script
-    const codeDisplayScriptPath = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'media', 'codeDisplay.js'));
-
     
 
     // Content Security Policy (CSP) to allow only specific scripts
@@ -289,16 +207,7 @@ function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri) {
     </head>
     <body>
         <div style="display: flex; flex-direction: row; height: 100%; box-sizing: border-box; min-width: 0; flex-wrap: nowrap;">
-            <div id="left-panel" class="scrollable-div" style="width: 50%; height: 100%; padding: 0; margin: 0; box-sizing: border-box; border-right: 1px solid var(--vscode-editor-foreground); min-width: 0">
-                <div class='top-bar'>
-                    <div class="stack-div">
-                        <vscode-button id="wat-chooser">Choose WAT</vscode-button>
-                        <p id="wat-file-name-display">WAT File: No file chosen</p>
-                    </div>
-                </div>
-                <div id="wat-editor-container"></div>
-            </div>
-            <div class="scrollable-div" style="width: 50%; box-sizing: border-box; min-width: 0;">
+            <div class="scrollable-div" style="width: 100%; box-sizing: border-box; min-width: 0;">
                 <div class='top-bar'>
                     <div class="stack-div">
                         <vscode-button id="csv-chooser">Choose CSV</vscode-button>
@@ -325,7 +234,6 @@ function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri) {
         <script nonce="${nonce}">  window.vscode = acquireVsCodeApi(); </script>
         <script type="module" nonce="${nonce}" src="${toolkitUri}"></script>
         <script nonce="${nonce}" src="${echartsJsPath}"></script>
-        <script type="module" nonce="${nonce}" src="${codeDisplayScriptPath}"></script>
 
         <script nonce ="${nonce}"> window.chartFunctions = new Map() </script>
         ${generateChartScriptElements(nonce, webview, extensionUri)};
@@ -386,15 +294,6 @@ function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri) {
                     });
                 }
 
-                const watChooserButton = document.getElementById('wat-chooser');
-                const watFileNameDisplay = document.getElementById('wat-file-name-display');
-                if (watChooserButton) {
-                    watChooserButton.addEventListener('click', () => {
-                        window.vscode.postMessage({
-                            command: 'chooseWat',
-                        });
-                    });
-                }
                 
                 const chartReseterButton = document.getElementById('chart-reseter');
                 if (chartReseterButton) {
@@ -414,11 +313,6 @@ function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri) {
                         case 'updateCsvFileName':
                             if (csvFileNameDisplay) {
                                 csvFileNameDisplay.textContent = \`File name: \${message.payload.fileName}\`;
-                            }
-                            break;
-                        case 'updateWatFileName':
-                            if(watFileNameDisplay) {
-                                watFileNameDisplay.textContent = \`File name: \${message.payload.fileName}\`;
                             }
                             break;
                         case 'updateChartSpecificDropdown':
@@ -448,50 +342,7 @@ function getNonce() {
     return text;
 }
 
-/**
- * Organizes a .wat file into [fid, pc] by line. 
- * 
- * Invalid fid or pc are set to -1
- * @param newWatContent The text from a .wat file in correct format (output of wasm-tools print)
- * @returns A Map from line number to a tuple of [fid, pc]
- */
-function organizeLineNumbers(newWatContent: string): Map<number, [number, number]>{
-    let lineCount = newWatContent.split('\n').length; // Use this instead of watParser.current_line_number to inclue trailing lines at the end
-    let watParser = new FSM(newWatContent);
-    watParser.run();
-    let lineToFid = new Map(Array.from(watParser.func_mapping, a => a.reverse() as [number, number]));
-    let output = new Map<number, [number, number]>();
-    fidPcToLine = new Map<number, Map<number, number>>();
-    let currentFid = -1;
-    let currentPc = -1;
-    for (let line: number = 1; line <= lineCount; line++){
-        if (lineToFid.has(line)){
-            currentFid = lineToFid.get(line)!;
-            currentPc = -1;
-        } else if (currentFid >= 0){ // Alternatively can be done with line - startLine ... But this works, so ...
-            const probeLocation = watParser.probe_mapping.get(currentFid);
-            if (probeLocation) {
-                const startLine = probeLocation[0];
-                const end_line = probeLocation[1];
-                if (line >= startLine && line <= end_line) {
-                    currentPc++;
-                } else {
-                    currentPc = -1;
-                    if (line > end_line){
-                        currentFid = -1;
-                    }
-                }
-            }
-        }
-        output.set(line, [currentFid, currentPc]);
-        if (!fidPcToLine.has(currentFid)){
-            fidPcToLine.set(currentFid, new Map<number,number>());
-        }
-        fidPcToLine.get(currentFid)!.set(currentPc,line);
-    }
-    lineToFidPc = output;
-    return output;
-}
+
 
 function generateChartOptionsMap(): Map<string, [string, cTM.ChartInfoTemplate<any> | undefined]>{
     return new Map<string, [string, cTM.ChartInfoTemplate<any> | undefined]>([

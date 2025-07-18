@@ -163,7 +163,7 @@
         const legendMargin = 75;
 
         // Calculate required height for multiple rows
-        let height = (legendMargin + (rowH * numRows))
+        let height = (legendMargin + (rowH * numRows));
         const minHeight = outerChartDom.clientHeight;
         if (height < minHeight){
           height = minHeight;
