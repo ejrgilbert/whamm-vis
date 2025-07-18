@@ -18,6 +18,7 @@
 
       // Initialize ECharts instance
       const chartDom = document.getElementById('chart-container');
+      const outerChartDom = document.getElementById('outer-chart-container');
       const myChart = echarts.init(chartDom, 'dark');
       let focused = false;
 
@@ -162,7 +163,12 @@
         const legendMargin = 75;
 
         // Calculate required height for multiple rows
-        chartDom.style.height = (legendMargin + (rowH * numRows)) + "px";
+        let height = (legendMargin + (rowH * numRows))
+        const minHeight = outerChartDom.clientHeight;
+        if (height < minHeight){
+          height = minHeight;
+        }
+        chartDom.style.height =  height + "px";
         
         // Margins and estimated sizes as percentages of cell dimensions
         const titleMarginCellTopFactor = 0.02; // 2% of cell height
