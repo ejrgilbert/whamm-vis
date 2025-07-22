@@ -1,13 +1,7 @@
 import * as parseCSV from '../parseCSV';
 import * as cDFuncs from '../chartDataFunctions';
 import {FSM} from '../wat_parser/fsm';
-import {getSVGPath} from '../graph_chart_display/svgPathParser';
 import * as vscode from 'vscode';
-
-// import { ChartInfoTemplate } from './chartInfoTemplate';
-// import { PieChartInfo } from './pieChartInfo';
-// import { GraphChartInfo } from './graphChartInfo';
-// import { DefaultChartInfo } from './defaultChartInfo';
 
 import * as cTM from './chartTemplateManager';
 
@@ -493,20 +487,12 @@ function organizeLineNumbers(newWatContent: string): Map<number, [number, number
     return output;
 }
 
-function generateChartOptionsMap(): Map<string, [string, cTM.ChartInfoTemplate<any> | undefined]>{
-    return new Map<string, [string, cTM.ChartInfoTemplate<any> | undefined]>([
-        ['default', ['defaultChart.js', undefined]],
-        ['pie', ['pieChart.js', undefined]],
-        ['graph', ['graphChart.js', undefined]]
-    ]);
-}
-
 function generateChartScriptElements(nonce: string, webview: vscode.Webview, extensionUri: vscode.Uri): string{
     let output: string = '';
     let template: (str: string) => string = (str:string) => `<script nonce="${nonce}" src="${webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'media', str))}"></script>\n`;
 
     if (!chartOptions){
-        chartOptions = generateChartOptionsMap();
+        chartOptions = cTM.generateChartOptionsMap();
     }
     for (let key of Array.from(chartOptions.keys())){
         output += template(chartOptions.get(key)![0]);
@@ -518,7 +504,7 @@ function generateChartDropdown():string {
     let output: string = '<select name="chart-type" id="chart-type-select">';
     let template: (str: string) => string = (str:string) =>  `<option value="${str}">${str.charAt(0).toUpperCase() + str.substring(1)} Chart</option>\n`;
     if (!chartOptions){
-        chartOptions = generateChartOptionsMap();
+        chartOptions = cTM.generateChartOptionsMap();
     }
     for (let key of Array.from(chartOptions.keys())){
         output += template(key);
@@ -529,7 +515,7 @@ function generateChartDropdown():string {
 
 function getChartInfo(chartType: string, parsedCSV: parseCSV.CSVRow[], fileName: string, panel: vscode.WebviewPanel, context: vscode.ExtensionContext): cTM.ChartInfoTemplate<any>{
     if (!chartOptions){
-        chartOptions = generateChartOptionsMap();
+        chartOptions = cTM.generateChartOptionsMap();
     }
     
     let chartTuple = chartOptions.get(chartType);
@@ -538,19 +524,5 @@ function getChartInfo(chartType: string, parsedCSV: parseCSV.CSVRow[], fileName:
         throw new Error("Invalid chartType in getChartInfo");
     }
 
-    if (!chartTuple[1] || chartTuple[1].fileName !== fileName){
-        
-        switch (chartType){
-            case "pie":
-                chartTuple[1] = new cTM.PieChartInfo(parsedCSV, panel, fileName);
-                break;
-            case "graph":
-                chartTuple[1] = new cTM.GraphChartInfo(parsedCSV, panel, fileName, getSVGPath(vscode.Uri.joinPath(context.extensionUri, 'media', 'svg_files', 'selfLoop.svg')));
-                break;
-            case "default":
-            default:
-                chartTuple[1] = new cTM.DefaultChartInfo(parsedCSV, panel, fileName);
-        }
-    }
-    return chartTuple[1];
+    return cTM.getChartInfo(chartTuple, chartType, parsedCSV, fileName, panel, context);
 }

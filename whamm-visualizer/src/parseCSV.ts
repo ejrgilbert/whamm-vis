@@ -50,10 +50,18 @@ export function parseFromString(CSV: string): CSVRow[] {
                 throw new Error("No Value Found");
             }
             let mapOutput: CSVRow[] = [];
-            for (let entry of data){
-                let keyArray = entry[key].substring(1, key.length - 2).split(",").map((str: string) => parseFloat(str));
-                // [keys, value]
-                mapOutput.push({"value(s)": [keyArray, parseFloat(entry[value])]});
+            if(data[0][key].charAt(0) === "("){// Key is a tuple
+                for (let entry of data){
+                    let keyArray = entry[key].substring(1, key.length - 2).split(",").map((str: string) => parseFloat(str));
+                    // [keys, value]
+                    mapOutput.push({"value(s)": [keyArray, parseFloat(entry[value])]});
+                }
+            } else {
+                for (let entry of data){
+                    let keyArray = parseFloat(entry[key]);
+                    // [keys, value]
+                    mapOutput.push({"value(s)": [keyArray, parseFloat(entry[value])]});
+                }
             }
             return mapOutput;
         default: // Standard format

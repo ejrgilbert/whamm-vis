@@ -39,7 +39,25 @@ export function isGraphChartData(data: chartData): data is graphChartData {
     return "graphChart" in data;
 }
 
-export type chartData = pieChartData | graphChartData;
+/**
+ * the format that the memory hotness display can read
+ */
+export type memoryHotnessChartData = {
+    memoryHotnessChart: true;
+    location: number,
+    value: number
+}
+
+/**
+ * Checks if a `chartData` object is a `memoryHotnessChartData` object
+ * @param data Data to check
+ * @returns If data is a `memoryHotnessChartData`
+ */
+export function isMemoryHotnessChartData(data: chartData): data is memoryHotnessChartData {
+    return "memoryHotnessChart" in data;
+}
+
+export type chartData = pieChartData | graphChartData | memoryHotnessChartData;
 
 /**
  * A map from `fid` to a map from `pc` to a map from `probe_id` to a CSVRow[]
