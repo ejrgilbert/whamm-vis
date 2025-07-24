@@ -27,9 +27,6 @@ export enum InjectType{
 }
 
 export const stringToInjectType: Record<string, InjectType> = {
-    // Lined up in order in terms of sections as well 
-    // until the last 2(Local and Probe)
-    //  which would depend on their function IDs
     'type': InjectType.Type,
     'import': InjectType.Import,
     'table': InjectType.Table,
@@ -43,36 +40,5 @@ export const stringToInjectType: Record<string, InjectType> = {
     'module': InjectType.Module,
 }
 
-export enum ModeKind{
-    before,
-    after,
-    alt
-}
-
-// Types
-export type ScriptLoc = {
-    l: number,
-    c: number,
-}
-
-export type Metadata = {
-    script_start: ScriptLoc;
-    script_end: ScriptLoc | undefined;
-}
-export type Probe = {
-    target_fid: number,
-    target_opcode_idx: number,
-    mode: ModeKind,
-    body: string[],
-    metadata: Metadata | undefined
-}
-
-export type WhammError = {
-    msg: string,
-    err_loc: Metadata | undefined;
-}
-
-export type WhammResponse = {
-    response: undefined | Map<InjectType, Probe[]>;
-    error: WhammError[] | undefined;
-}
+export enum sectionNamesInOrder {type = "type", import = "import", table = "table", memory = "memory", tag = "tag", global  = "global",
+                                    export = "export", start = "start", elem = "elem", func = "func", data = "data", custom = "custom"}

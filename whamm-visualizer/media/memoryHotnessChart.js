@@ -37,7 +37,7 @@
             let data = [];
             for (let i = 0; i <= 256; i++) {
                 for (let j = 0; j <= 256; j++) {
-                data.push({name: cellPrefix + (i * 256 + j), value: [i, j, i/j/2]});
+                data.push({name: cellPrefix + (i * 256 + j), value: [i, j, i / (j + 1) / 2]});
                 }
                 xData.push(i);
             }
@@ -47,7 +47,7 @@
 
             option = {
             tooltip: {formatter: function (param) {
-                            return "Address: " + (param.value[0] * 256 + param.value[1]) + "\nValue: " + param.value[2];
+                            return param.data.name + "\nValue: " + param.value[2];
                         }},
             xAxis: {
                 type: 'category',
@@ -180,7 +180,7 @@
 
                 let newOptions = {
                     tooltip: {formatter: function (param) {
-                        return "Address: " + (param.data.address) + "\nValue: " + param.value[2];
+                        return param.data.name + "\nValue: " + param.value[2];
                     }},
                     title: {
                         top: 30,

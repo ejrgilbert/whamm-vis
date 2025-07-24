@@ -107,7 +107,6 @@ export class MemoryHotnessChartInfo extends ChartInfoTemplate<memoryHotnessChart
 
         return payload;
     }
-    // TODO make selecting in all to focus on specific map
     onCodeSelectedFidPc(selectedFid: number, selectedPc: number): void {
         // Does Nothing
     }

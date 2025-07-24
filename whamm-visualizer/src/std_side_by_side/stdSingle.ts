@@ -180,7 +180,8 @@ let currentCSVFileName: string;
 function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri) {
     // Path to the ECharts library within your extension
     const echartsJsPath = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'node_modules', 'echarts', 'dist', 'echarts.min.js'));
- 
+    const echartsGlJsPath = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'node_modules', 'echarts-gl', 'dist', 'echarts-gl.min.js'));
+   
     // Path to the style sheet
     const styleSheetPath = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'media', 'styles.css'));
 
@@ -197,7 +198,7 @@ function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri) {
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>ECharts Chart</title>
                 <link rel="stylesheet" href="${styleSheetPath}">
-        <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource} https:; script-src 'nonce-${nonce}'; style-src ${webview.cspSource} 'unsafe-inline';">
+        <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource} https:; script-src 'nonce-${nonce}' 'unsafe-eval'; style-src ${webview.cspSource} 'unsafe-inline';">
     </head>
     <body>
         <div style="display: flex; flex-direction: row; height: 100%; box-sizing: border-box; min-width: 0; flex-wrap: nowrap;">
@@ -228,6 +229,7 @@ function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri) {
         <script nonce="${nonce}">  window.vscode = acquireVsCodeApi(); </script>
         <script type="module" nonce="${nonce}" src="${toolkitUri}"></script>
         <script nonce="${nonce}" src="${echartsJsPath}"></script>
+        <script nonce="${nonce}" src="${echartsGlJsPath}"></script>
 
         <script nonce ="${nonce}"> window.chartFunctions = new Map() </script>
         ${generateChartScriptElements(nonce, webview, extensionUri)};

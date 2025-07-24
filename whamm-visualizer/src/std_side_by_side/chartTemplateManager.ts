@@ -15,7 +15,8 @@ export function generateChartOptionsMap(): Map<string, [string, ChartInfoTemplat
         ['default', ['defaultChart.js', undefined]],
         ['pie', ['pieChart.js', undefined]],
         ['graph', ['graphChart.js', undefined]],
-        ['memoryHotness', ['memoryHotnessChart.js', undefined]]
+        ['memoryHotness', ['memoryHotnessChart.js', undefined]],
+        ['3DMemoryHotness', ['3DMemoryHotnessChart.js', undefined]],
     ]);
 }
 
@@ -32,6 +33,9 @@ export function getChartInfo(chartTuple: [string, ChartInfoTemplate<any> | undef
                 chartTuple[1] = new GraphChartInfo(parsedCSV, panel, fileName, getSVGPath(vscode.Uri.joinPath(context.extensionUri, 'media', 'svg_files', 'selfLoop.svg')));
                 break;
             case "memoryHotness":
+                chartTuple[1] = new MemoryHotnessChartInfo(parsedCSV, panel, fileName);
+                break;
+            case "3DMemoryHotness":
                 chartTuple[1] = new MemoryHotnessChartInfo(parsedCSV, panel, fileName);
                 break;
             case "default":
