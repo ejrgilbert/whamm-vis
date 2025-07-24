@@ -13,6 +13,13 @@ import * as cTM from './chartTemplateManager';
 export function stdSideBySideDisplay(context: vscode.ExtensionContext): vscode.Disposable{
     return vscode.commands.registerCommand('whamm-visualizer.open-side-by-side-generic', async () => {        
         
+        parsedCSV = [];
+
+        chartOptions = cTM.generateChartOptionsMap();
+        currentChartOption = 'default';
+    
+        currentCSVFileName = '';
+
         const panel = vscode.window.createWebviewPanel(
             'Standard Side by Side',
             'Side by Side Output',
@@ -56,7 +63,6 @@ export function stdSideBySideDisplay(context: vscode.ExtensionContext): vscode.D
                 // Send data to the webview
                 const chartInfo = getChartInfo(currentChartOption, parsedCSV, currentCSVFileName, panel, context);
                 const payload = chartInfo.generateUpdateChartDataPayload();
-                console.log(payload);
                 panel.webview.postMessage({
                     command: 'updateChartData',
                     payload: payload

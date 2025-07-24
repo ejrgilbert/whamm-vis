@@ -12,6 +12,14 @@ import * as cTM from './chartTemplateManager';
 export function stdDisplay(context: vscode.ExtensionContext): vscode.Disposable{
     return vscode.commands.registerCommand('whamm-visualizer.open-display-generic', async () => {        
         
+
+        parsedCSV = [];
+
+        chartOptions = cTM.generateChartOptionsMap();
+        currentChartOption = 'default';
+
+        currentCSVFileName = '';
+
         const panel = vscode.window.createWebviewPanel(
             'Standard Display',
             'Display Output',
@@ -55,7 +63,6 @@ export function stdDisplay(context: vscode.ExtensionContext): vscode.Disposable{
                 // Send data to the webview
                 const chartInfo = getChartInfo(currentChartOption, parsedCSV, currentCSVFileName, panel, context);
                 const payload = chartInfo.generateUpdateChartDataPayload();
-                console.log(payload);
                 panel.webview.postMessage({
                     command: 'updateChartData',
                     payload: payload

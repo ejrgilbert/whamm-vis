@@ -31,22 +31,6 @@
             };
             window.addEventListener('resize', handleResize);
 
-            // --- DEBUGGING ECHARTS-GL LOADING ---
-            console.log("Attempting to initialize 3DMemoryHotnessChart.");
-            if (typeof echarts.getInstanceByDom === 'function') {
-                console.log("ECharts core is loaded.");
-            } else {
-                console.error("ECharts core not detected!");
-            }
-            // A common way to check for ECharts-GL features
-            if (echarts.graphic && echarts.graphic.GL) {
-                console.log("ECharts-GL features detected (e.g., echarts.graphic.GL).");
-            } else {
-                console.warn("ECharts-GL features NOT fully detected. This might be the issue.");
-                // Provide a fallback or alert the user if 3D is critical
-            }
-            // --- END DEBUGGING ECHARTS-GL LOADING ---
-
             let xData = [];
             let yData = [];
 
