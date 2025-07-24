@@ -19,7 +19,7 @@
       // Initialize ECharts instance
       const chartDom = document.getElementById('chart-container');
       const outerChartDom = document.getElementById('outer-chart-container');
-      const myChart = echarts.init(chartDom, 'dark');
+      window.myChart = echarts.init(chartDom, 'dark');
       let focused = false;
 
 
@@ -28,7 +28,7 @@
 
       
       // Caches the option field for the echart so when it focuses on one it can go back
-      let cachedOption = myChart.getOption;
+      let cachedOption = window.myChart.getOption;
       let cachedChartsPerRow = 2;
 
       // --- Refactor listeners to be removable ---
@@ -53,9 +53,9 @@
             }
           */
           case 'updateChartData':
-            myChart.hideLoading();
+            window.myChart.hideLoading();
             updateChart(payload.chartData, payload.chartsPerRow);
-            cachedOption = myChart.getOption();
+            cachedOption = window.myChart.getOption();
             cachedChartsPerRow = payload.chartsPerRow;
             break;
         }
@@ -65,10 +65,10 @@
       // Focuses on target chart when double clicked or returns to base view
       const handleDblClick = function (params) {
         // Hide the tooltip to prevent errors when the chart is re-rendered.
-        myChart.dispatchAction({ type: 'hideTip' });
+        window.myChart.dispatchAction({ type: 'hideTip' });
 
         if (!focused){
-          cachedOption = myChart.getOption();
+          cachedOption = window.myChart.getOption();
           updateChart([{data: cachedOption.series[params.seriesIndex].data,
             title: cachedOption.title[params.seriesIndex].text,
             subtitle: cachedOption.title[params.seriesIndex].subtext,
@@ -95,7 +95,7 @@
           });
         }
       };
-      myChart.on('dblclick', handleDblClick);
+      window.myChart.on('dblclick', handleDblClick);
 
       /** Template Series Object */
       function generateSeriesObject(){
@@ -225,8 +225,8 @@
             shadowColor: 'rgba(0, 0, 0, 0.5)'
           }
         };
-        myChart.resize(); // Ensure chart adapts to new container height
-        myChart.setOption(chartOption, true); // true to not merge with previous options
+        window.myChart.resize(); // Ensure chart adapts to new container height
+        window.myChart.setOption(chartOption, true); // true to not merge with previous options
         focused = false;// TODO
       }
 

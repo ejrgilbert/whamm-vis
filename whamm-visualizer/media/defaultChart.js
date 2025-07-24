@@ -19,13 +19,14 @@
             
             chartDom.style.height = outerChartDom.clientHeight + 'px';
             
+            
+            window.myChart = echarts.init(chartDom, 'dark');
+
             handleResize = () => {
                 chartDom.style.height = outerChartDom.clientHeight + 'px';
-                myChart.resize();
+                window.myChart.resize();
             };
             window.addEventListener('resize', handleResize);
-            
-            var myChart = echarts.init(chartDom, 'dark');
 
             option = {
                 // backgroundColor: 'red',
@@ -76,7 +77,7 @@
                     ]
                 }
             };
-            myChart.setOption(option);
+            window.myChart.setOption(option);
         }, 1);
         // --- Return a cleanup function ---
         return function cleanup() {

@@ -21,13 +21,13 @@
             
             chartDom.style.height = outerChartDom.clientHeight + 'px';
             
-            var myChart = echarts.init(chartDom, 'dark');;
+            window.myChart = echarts.init(chartDom, 'dark');;
 
             const nodePrefix = "FID: ";
 
             handleResize = () => {
                 chartDom.style.height = outerChartDom.clientHeight + 'px';
-                myChart.resize();
+                window.myChart.resize();
             };
             window.addEventListener('resize', handleResize);
 
@@ -48,9 +48,9 @@
                         });
                     */
                     case 'updateChartData':
-                        myChart.hideLoading();
+                        window.myChart.hideLoading();
                         updateChart(payload.title, payload.chartData, payload.selfLoopSVG);
-                        cachedOption = myChart.getOption();
+                        cachedOption = window.myChart.getOption();
                         break;
                     /*
                         {
@@ -61,7 +61,7 @@
                         }
                     */
                     case 'selectNode':
-                        myChart.dispatchAction({
+                        window.myChart.dispatchAction({
                             type: 'select',
                             name: nodePrefix + payload.selectedNode
                         });
@@ -156,7 +156,7 @@
             };
 
             // Set the options to the chart
-            myChart.setOption(option);
+            window.myChart.setOption(option);
 
             /**
              * Updates the chart (fully replaces the data)
@@ -274,7 +274,7 @@
                 };
 
                 // Set the options to the chart
-                myChart.setOption(option);
+                window.myChart.setOption(option);
             }
 
             let selectedNode = -1;
@@ -292,7 +292,7 @@
 
                 // Toggles selection state of the origin of the edge when an ege is clicked
                 if(params.dataType === 'edge' && selectedNode !== currentNode){
-                    myChart.dispatchAction({
+                    window.myChart.dispatchAction({
                         type: 'select',
                         name: nodePrefix + currentNode
                     });
@@ -303,7 +303,7 @@
                     selectedNode = -1;
                 }
             };
-            myChart.on('click', handleClick);
+            window.myChart.on('click', handleClick);
 
             
         }, 1);

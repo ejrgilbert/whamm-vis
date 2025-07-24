@@ -21,13 +21,13 @@
             
             chartDom.style.height = outerChartDom.clientHeight + 'px';
             
-            var myChart = echarts.init(chartDom, 'dark');
+            window.myChart = echarts.init(chartDom, 'dark');
 
             const cellPrefix = "Address: ";
 
             handleResize = () => {
                 chartDom.style.height = outerChartDom.clientHeight + 'px';
-                myChart.resize();
+                window.myChart.resize();
             };
             window.addEventListener('resize', handleResize);
 
@@ -132,7 +132,7 @@
                 }
                 ]
             };
-            myChart.setOption(option);
+            window.myChart.setOption(option);
             // Recieves the messages
             handleMessage = event => {
                 const message = event.data; // The JSON data sent from the extension host
@@ -147,9 +147,9 @@
                         };
                     */
                     case 'updateChartData':
-                        myChart.hideLoading();
+                        window.myChart.hideLoading();
                         updateChart(payload.title, payload.chartData, payload.maxValue, payload.xSize, payload.ySize);
-                        cachedOption = myChart.getOption();
+                        cachedOption = window.myChart.getOption();
                         break;
   
                 }
@@ -270,7 +270,7 @@
                     }
                     ]
                 };
-                myChart.setOption(newOptions);
+                window.myChart.setOption(newOptions);
             }
 
             const handleClick = function (params) {
@@ -283,7 +283,7 @@
                     dropdown.dispatchEvent(new Event('change'));
                 }
             };
-            myChart.on('click', handleClick);
+            window.myChart.on('click', handleClick);
    
         }, 1);
 

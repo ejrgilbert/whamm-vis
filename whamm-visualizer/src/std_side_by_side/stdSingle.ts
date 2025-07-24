@@ -3,6 +3,7 @@ import * as cDFuncs from '../chartDataFunctions';
 import * as vscode from 'vscode';
 
 import * as cTM from './chartTemplateManager';
+import path from 'path';
 
 /**
  * Handles the whamm-visualizer.open-side-by-side-generic command
@@ -148,16 +149,34 @@ export function stdDisplay(context: vscode.ExtensionContext): vscode.Disposable{
                             chartInfo.onDropdownChange(message.payload.selectedValue);
                         }
                         return;
-                    // case 'changeChartType':
-                    //     const chartType = message.payload.chartType;
+                    case 'saveImage':
+                        const dataURL = message.payload.dataURL;
+                        const base64Data = dataURL.replace(/^data:image\/png;base64,/, "");
+                        const imageBuffer = Buffer.from(base64Data, 'base64');
+                        try {
+                            
+                            // Prompt the user to select a save location and filename
+                            const defaultFileName = 'echarts_chart.png';
+                            const uri = await vscode.window.showSaveDialog({
+                                filters: {
+                                    'PNG Images': ['png']
+                                },
+                                defaultUri: vscode.Uri.file(path.join(vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '', defaultFileName))
+                            });
 
-                    //     // Call the loadChart function in the webview
-                    //     panel.webview.postMessage({
-                    //         command: 'loadChart',
-                    //         payload: { chartType: chartType }
-                    //     });
+                            if (uri) {
+                                await vscode.workspace.fs.writeFile(uri, imageBuffer);
+                                vscode.window.showInformationMessage(`Chart saved successfully to ${uri.fsPath}`);
+                            } else {
+                                vscode.window.showInformationMessage('Chart save cancelled.');
+                            }
+
+                        } catch (error: any) {
+                            vscode.window.showErrorMessage(`Error saving chart: ${error.message}`);
+                            console.error('Error saving ECharts chart:', error);
+                        }
                         
-                    //     return;
+                        return;
                     case 'resetChart':
                         panel.webview.postMessage({
                             command: 'updateChartData',
@@ -206,6 +225,7 @@ export function stdDisplay(context: vscode.ExtensionContext): vscode.Disposable{
                                 <p id="csv-file-name-display">File name: No file chosen</p>
                             </div>
                             <vscode-button id="chart-reseter">Reset Charts</vscode-button>
+                            <vscode-button id="chart-exporter">Export Charts</vscode-button>
                             <div class="stack-div">
                                 <label for="chart-type">Choose a chart type:</label>
                                 ${generateChartDropdown()}
@@ -293,6 +313,22 @@ export function stdDisplay(context: vscode.ExtensionContext): vscode.Disposable{
                             chartReseterButton.addEventListener('click', () => {
                                 window.vscode.postMessage({
                                     command:'resetChart',
+                                });
+                            });
+                        }
+
+                        const chartExporterButton = document.getElementById('chart-exporter');
+                        if (chartExporterButton) {
+                            chartExporterButton.addEventListener('click', () => {
+                                const dataURL = window.myChart.getDataURL({
+                                    type: 'png', // Specify 'png' for PNG format
+                                    pixelRatio: 3, // Optional: Increase pixel ratio for higher resolution
+                                });
+                                window.vscode.postMessage({
+                                    command: 'saveImage',
+                                    payload: {
+                                        dataURL: dataURL
+                                    }
                                 });
                             });
                         }
