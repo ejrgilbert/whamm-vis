@@ -52,7 +52,10 @@
             xAxis: {
                 type: 'category',
                 data: xData,
-                show: false
+                axisLabel: {
+                    formatter: function (value, index) {
+                        return value * 256;
+                }},                
             },
             yAxis: {
                 type: 'category',
@@ -234,7 +237,10 @@
                     xAxis: {
                         type: 'category',
                         data: xData,
-                        show: false
+                        axisLabel: {
+                    formatter: function (value, index) {
+                        return value * ySize;
+                }}, 
                     },
                     yAxis: {
                         type: 'category',
