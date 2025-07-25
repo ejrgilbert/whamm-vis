@@ -23,7 +23,9 @@
             
             window.myChart = echarts.init(chartDom, 'dark');
 
-            const cellPrefix = "Address: ";
+            let cellPrefix = "Address: ";
+            let dropdownSuffix = '';
+            let navigable = false;
 
             handleResize = () => {
                 chartDom.style.height = outerChartDom.clientHeight + 'px';
@@ -37,7 +39,7 @@
             let data = [];
             for (let i = 0; i <= 256; i++) {
                 for (let j = 0; j <= 256; j++) {
-                data.push({name: cellPrefix + (i * 256 + j), value: [i, j, i / (j + 1) / 2]});
+                data.push({name: (i * 256 + j), value: [i, j, i / (j + 1) / 2]});
                 }
                 xData.push(i);
             }
@@ -47,27 +49,27 @@
 
             option = {
             tooltip: {formatter: function (param) {
-                            return param.data.name + "\nValue: " + param.value[2];
+                            return cellPrefix + param.data.name + "\nValue: " + param.value[2];
                         }},
             xAxis: {
                 type: 'category',
                 data: xData,
-                axisLabel: {
-                    formatter: function (value, index) {
-                        return value * 256;
-                }},                
+                show: false 
             },
             yAxis: {
                 type: 'category',
                 data: yData,
                 inverse: true,
-                show: false
+                axisLabel: {
+                    formatter: function (value, index) {
+                        return value * 256;
+                }},
             },
             visualMap: {
                 type: 'piecewise',
                 min: 0,
                 max: 1,
-                calculable: true,
+                // calculable: true,
                 realtime: false,
                 // Use pieces to define specific ranges and their colors
                 pieces: [
@@ -146,7 +148,10 @@
                     */
                     case 'updateChartData':
                         window.myChart.hideLoading();
-                        updateChart(payload.title, payload.chartData, payload.maxValue, payload.xSize, payload.ySize);
+                        cellPrefix = payload.prefix;
+                        dropdownSuffix = payload.dropdownSuffix;
+                        navigable = payload.navigable;
+                        updateChart(payload.title, payload.chartData, payload.maxValue, payload.xSize, payload.ySize, payload.maxAddress);
                         cachedOption = window.myChart.getOption();
                         break;
   
@@ -155,35 +160,35 @@
             };
             window.addEventListener('message', handleMessage);
 
-            function updateChart(title, chartData, maxValue, xSize, ySize){
+            function updateChart(title, chartData, maxValue, xSize, ySize, maxAddress){
                 let data = [];
-                for (let i = 0; i < xSize * ySize; i++){
-                   data[i] = {name: cellPrefix + i, value: [Math.floor(i / ySize), i % ySize, 0], address: i};
+                for (let i = 0; i < Math.min(ySize * xSize, maxAddress); i++){
+                   data[i] = {name: i, value: [i % xSize, Math.floor(i / xSize), 0]};
                 }
 
                 let xData = [];
-                for (let i = 0; i < xSize; i++){
+                for (let i = 0; i < ySize; i++){
                     xData.push(i);
                 }
 
                 let yData = [];
-                for (let i = 0; i < ySize; i++){
+                for (let i = 0; i < xSize; i++){
                     yData.push(i);
                 }
 
 
 
                 for (let entry of chartData){
-                    const modLocation = entry.location % (xSize * ySize);
-                    const xLocation = Math.floor(modLocation / ySize);
-                    const yLocation = modLocation % ySize;
-                    data[modLocation] = {name: cellPrefix + entry.location, value: [xLocation, yLocation, entry.value], address: modLocation};
+                    const modLocation = entry.location % (ySize * xSize);
+                    const xLocation = modLocation % xSize;
+                    const yLocation = Math.floor(modLocation / xSize);
+                    data[modLocation] = {name: entry.location, value: [xLocation, yLocation, entry.value]};
                 }
 
 
                 let newOptions = {
                     tooltip: {formatter: function (param) {
-                        return param.data.name + "\nValue: " + param.value[2];
+                        return cellPrefix + param.data.name + "</br>Value: " + param.value[2];
                     }},
                     title: {
                         top: 30,
@@ -211,7 +216,7 @@
                         min: 0,
                         max: maxValue,
                         range: [0.1, maxValue],
-                        calculable: true,
+                        // calculable: true,
                         realtime: false,
                         inRange: {
                             color: [
@@ -237,26 +242,27 @@
                     xAxis: {
                         type: 'category',
                         data: xData,
-                        axisLabel: {
-                    formatter: function (value, index) {
-                        return value * ySize;
-                }}, 
+                        show: false 
                     },
                     yAxis: {
                         type: 'category',
                         data: yData,
                         inverse: true,
-                        show: false
+                        axisLabel: {
+                            formatter: function (value, index) {
+                                return value * xSize;
+                        }},
                     },
                 };
                 window.myChart.setOption(newOptions);
             }
 
             const handleClick = function (params) {
-                const currentPage = params.data.address;
+                if(!navigable){ return; }
+                const currentPage = params.data.name;
                 const dropdown = document.getElementById('chart-specific-dropdown');
                 if (dropdown) {
-                    dropdown.value = currentPage;
+                    dropdown.value = currentPage + dropdownSuffix;
                     // Dispatch a 'change' event so that other listeners can react to the new value.
                     // This will trigger the 'chartSpecificDropdownChanged' message to the extension backend.
                     dropdown.dispatchEvent(new Event('change'));

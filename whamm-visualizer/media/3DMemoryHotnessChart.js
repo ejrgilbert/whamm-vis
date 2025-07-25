@@ -23,7 +23,9 @@
             
             window.myChart = echarts.init(chartDom, 'dark');
 
-            const cellPrefix = "Address: ";
+            let cellPrefix = "Address: ";
+            let dropdownSuffix = '';
+            let navigable = false;
 
             handleResize = () => {
                 chartDom.style.height = outerChartDom.clientHeight + 'px';
@@ -47,7 +49,7 @@
 
             option = {
                 tooltip: {formatter: function (param) {
-                        return cellPrefix + param.data.name + " " + param.value[2];
+                            return cellPrefix + param.data.name + "\nValue: " + param.value[2];
                     }},
                 visualMap: {
                 show: true,
@@ -148,7 +150,10 @@
                     */
                     case 'updateChartData':
                         window.myChart.hideLoading();
-                        updateChart(payload.title, payload.chartData, payload.maxValue, payload.xSize, payload.ySize);
+                        cellPrefix = payload.prefix;
+                        dropdownSuffix = payload.dropdownSuffix;
+                        navigable = payload.navigable;
+                        updateChart(payload.title, payload.chartData, payload.maxValue, payload.xSize, payload.ySize, payload.maxAddress);
                         cachedOption = window.myChart.getOption();
                         break;
   
@@ -157,7 +162,7 @@
             };
             window.addEventListener('message', handleMessage);
 
-            function updateChart(title, chartData, maxValue, xSize, ySize){
+            function updateChart(title, chartData, maxValue, xSize, ySize, maxAddress){
                 let data = [];
                 for (let i = 0; i < xSize * ySize; i++){
                    data[i] = {name: i, value: [Math.floor(i / ySize), i % ySize, 0]};
@@ -274,10 +279,11 @@
             }
 
             const handleClick = function (params) {
+                if(!navigable){ return; }
                 const currentPage = params.data.name;
-                const dropdown = document.getElementById('chart-specific-dropdown');
+                    const dropdown = document.getElementById('chart-specific-dropdown');
                 if (dropdown) {
-                    dropdown.value = currentPage;
+                    dropdown.value = currentPage + dropdownSuffix;
                     // Dispatch a 'change' event so that other listeners can react to the new value.
                     // This will trigger the 'chartSpecificDropdownChanged' message to the extension backend.
                     dropdown.dispatchEvent(new Event('change'));
