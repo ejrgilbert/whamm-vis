@@ -315,7 +315,7 @@ export function stdSideBySideDisplay(context: vscode.ExtensionContext): vscode.D
                         <div id="wat-editor-container"></div>
                     </div>
                     <div class="scrollable-div" style="width: 50%; box-sizing: border-box; min-width: 0;">
-                        <div class='top-bar'>
+                        <div class='top-bar' style="width: 95%">
                             <div class="stack-div">
                                 <vscode-button id="csv-chooser">Choose CSV</vscode-button>
                                 <p id="csv-file-name-display">File name: No file chosen</p>
