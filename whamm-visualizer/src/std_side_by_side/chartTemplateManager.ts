@@ -6,7 +6,7 @@ import { MemoryHotnessChartInfo } from './memoryHotnessChartInfo';
 
 import * as vscode from 'vscode';
 import * as parseCSV from '../parseCSV';
-import {getSVGPath} from '../graph_chart_display/svgPathParser';
+import {getSVGPath} from '../svgPathParser';
 
 export { ChartInfoTemplate };
 

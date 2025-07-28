@@ -1,6 +1,6 @@
 ## How to Add New .svg Images for echarts
 
-1. Ensure that there is only one path
+1. Ensure that there is only one svg path in the .svg file
 
     For example: Use Inkscape and union/difference all objects together
 

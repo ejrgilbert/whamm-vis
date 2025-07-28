@@ -19,34 +19,14 @@
         "title": "Open Text Display"
       },
       {
-        "command": "whamm-visualizer.open-side-by-side-pie",
-        "category": "Whamm Visualizer",
-        "title": "Open Side By Side Pie Display"
-      },
-      {
-        "command": "whamm-visualizer.open-pie-display",
-        "category": "Whamm Visualizer",
-        "title": "Open Pie Display"
-      },
-      {
-        "command": "whamm-visualizer.open-graph-display",
-        "category": "Whamm Visualizer",
-        "title": "Open Graph Display"
-      },
-      {
-        "command": "whamm-visualizer.open-side-by-side-graph",
-        "category": "Whamm Visualizer",
-        "title": "Open Side By Side Graph Display"
-      },
-      {
         "command": "whamm-visualizer.open-side-by-side-generic",
         "category": "Whamm Visualizer",
-        "title": "Open Standard Side By Side Display"
+        "title": "Open Side By Side Display"
       },
       {
         "command": "whamm-visualizer.open-display-generic",
         "category": "Whamm Visualizer",
-        "title": "Open Standard Display"
+        "title": "Open Display"
       }
     ]
   },
