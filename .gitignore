@@ -1,6 +1,6 @@
 __pycache__/
 **/node_modules
-whamm-visualizer/out
-whamm-visualizer/dist
-whamm-visualizer/.vscode-test/
-whamm-visualizer/*.vsix
+out/
+dist/
+.vscode-test/
+*.vsix
