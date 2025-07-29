@@ -1,19 +1,3 @@
-/* Things to have for each:
-    updateChartData payload
-    how to handle recieving codeSelectedFidPc
-    chartScriptPath
-    dataMapping()
-
-    SVG reading? part of dataMapping()?
-*/
-
-/* Things that need to be standardized:
-    chartData
-    parsedCSV
-    dataMapping() use
-
-*/
-
 import { WebviewPanel } from 'vscode';
 import * as parseCSV from '../parseCSV';
 
@@ -41,7 +25,7 @@ export abstract class ChartInfoTemplate<Payload> {
     /**
      * The vscode.WebViewPanel containing everything
     */
-   protected panel: WebviewPanel;
+    protected panel: WebviewPanel;
    
     /**
     * The file name of the .csv file

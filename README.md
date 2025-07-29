@@ -1,6 +1,4 @@
-# whamm-visualizer README
-
-This is the README for your extension "whamm-visualizer". After writing up a brief description, we recommend including the following sections.
+# whamm-vis README
 
 ## Features
 
