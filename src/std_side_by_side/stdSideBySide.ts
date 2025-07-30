@@ -260,6 +260,7 @@ export function stdSideBySideDisplay(context: vscode.ExtensionContext): vscode.D
                         
                         return;
                     case 'resetChart':
+                        chartOptions = cTM.generateChartOptionsMap();
                         panel.webview.postMessage({
                             command: 'updateChartData',
                             payload: getChartInfo(currentChartOption, parsedCSV, currentCSVFileName, panel, context).generateUpdateChartDataPayload()
@@ -422,6 +423,10 @@ export function stdSideBySideDisplay(context: vscode.ExtensionContext): vscode.D
                                 window.vscode.postMessage({
                                     command:'resetChart',
                                 });
+                                const chartSpecificDropdown = document.getElementById('chart-specific-dropdown');
+                                if (chartSpecificDropdown) {
+                                    chartSpecificDropdown.selectedIndex = 0;
+                                }
                             });
                         }
 

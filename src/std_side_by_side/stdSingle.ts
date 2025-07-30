@@ -178,6 +178,7 @@ export function stdDisplay(context: vscode.ExtensionContext): vscode.Disposable{
                         
                         return;
                     case 'resetChart':
+                        chartOptions = cTM.generateChartOptionsMap();
                         panel.webview.postMessage({
                             command: 'updateChartData',
                             payload: getChartInfo(currentChartOption, parsedCSV, currentCSVFileName, panel, context).generateUpdateChartDataPayload()
@@ -314,7 +315,12 @@ export function stdDisplay(context: vscode.ExtensionContext): vscode.Disposable{
                                 window.vscode.postMessage({
                                     command:'resetChart',
                                 });
-                            });
+                                const chartSpecificDropdown = document.getElementById('chart-specific-dropdown');
+                                if (chartSpecificDropdown) {
+                                    chartSpecificDropdown.selectedIndex = 0;
+                                }
+                            }
+                            );
                         }
 
                         const chartExporterButton = document.getElementById('chart-exporter');
