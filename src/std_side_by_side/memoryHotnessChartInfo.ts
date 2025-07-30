@@ -143,7 +143,7 @@ export class MemoryHotnessChartInfo extends ChartInfoTemplate<memoryHotnessChart
             } else {
                 maxAddress = this.pagesPerSuperPage * (currentSuperPage + 1) - 1;
             }
-            const sqrtAmount = Math.sqrt(maxAddress - minAddress);
+            const sqrtAmount = Math.sqrt(maxAddress - minAddress + 1);
             const payload: memoryHotnessChartPayload = {
                 title: this.fileName,
                 chartData: chartData,
