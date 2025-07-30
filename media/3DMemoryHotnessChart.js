@@ -76,7 +76,8 @@
                 
                 },
                 yAxis3D: {
-                type: 'category'
+                type: 'category',
+                show: false
                 },
                 zAxis3D: {
                 type: 'value',
@@ -164,7 +165,7 @@
 
             function updateChart(title, chartData, maxValue, xSize, ySize, maxAddress){
                 let data = [];
-                for (let i = 0; i < xSize * ySize; i++){
+                for (let i = 0; i < Math.min(ySize * xSize, maxAddress); i++){
                    data[i] = {name: i, value: [Math.floor(i / ySize), i % ySize, 0]};
                 }
 
@@ -223,9 +224,14 @@
                     },
                     xAxis3D: {
                         type: 'category',
+                        axisLabel: {
+                            formatter: function (value, index) {
+                                return value * xSize;
+                        }},
                     },
                     yAxis3D: {
-                        type: 'category',
+                        type: 'category', 
+                        show: false,                       
                     },
                     zAxis3D: {
                         type: 'value',
