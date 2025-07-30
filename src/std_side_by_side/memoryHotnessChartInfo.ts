@@ -9,6 +9,7 @@ type memoryHotnessChartPayload = {
     maxValue: number;
     xSize: number;
     ySize:number;
+    minAddress: number,
     maxAddress: number;
     prefix: string;
     dropdownSuffix: string;
@@ -16,6 +17,8 @@ type memoryHotnessChartPayload = {
 }
 
 export class MemoryHotnessChartInfo extends ChartInfoTemplate<memoryHotnessChartPayload>{
+
+    readonly pagesPerSuperPage: number = 256;
     
     generateDropdown(): string {
         let output = '<label for="chart-specific-dropdown">Choose Page</label>';
@@ -47,14 +50,16 @@ export class MemoryHotnessChartInfo extends ChartInfoTemplate<memoryHotnessChart
         super(parsedCSV, panel, fileName);
         this.organizedCSV = new Map();
         this.superPageMap = new Map();
+        this.highestSuperPage = 0;
         for (let row of parsedCSV){
             let values = row['value(s)'] as [number, number];
             let page = Math.floor(values[0] / 65536);
-            const superPage = Math.floor(page / 256); // Might Supposed to be 65536
+            const superPage = Math.floor(page / this.pagesPerSuperPage); // Might Supposed to be 65536 // Max per super page
             if (!this.organizedCSV.has(page)){
                 this.organizedCSV.set(page, {data: [], maxAccessed: 0, totalAccessed: 0});
                 if(!this.superPageMap.get(superPage)){
                     this.superPageMap.set(superPage, {pages: [], totalAccessed: 0});
+                    this.highestSuperPage = Math.max(this.highestSuperPage, superPage);
                 }
                 this.superPageMap.get(superPage)!.pages.push(page);
             }
@@ -73,6 +78,8 @@ export class MemoryHotnessChartInfo extends ChartInfoTemplate<memoryHotnessChart
     private superPageMap: Map<number, {pages: number[], totalAccessed: number}>;
 
     private currentPage: string;
+
+    private highestSuperPage: number;
 
     generateUpdateChartDataPayload(): memoryHotnessChartPayload {
         if(this.currentPage === 'all' && this.superPageMap.size > 1){
@@ -97,6 +104,7 @@ export class MemoryHotnessChartInfo extends ChartInfoTemplate<memoryHotnessChart
                 maxValue: maxValue,
                 xSize: Math.ceil(sqrtAmount),
                 ySize: Math.ceil(sqrtAmount),
+                minAddress: 0,
                 maxAddress: maxPageNumber + 1,
                 prefix: 'Super Page: ',
                 dropdownSuffix: ' (Super Page)',
@@ -108,7 +116,7 @@ export class MemoryHotnessChartInfo extends ChartInfoTemplate<memoryHotnessChart
         } else if(this.currentPage.endsWith(' (Super Page)') || (this.currentPage === 'all' && this.superPageMap.size === 1)){
             let currentSuperPage;
             if (this.superPageMap.size === 1){
-                currentSuperPage = 0;
+                currentSuperPage = this.superPageMap.keys().next().value!;
             } else {
                 currentSuperPage = parseInt(this.currentPage);
             }
@@ -128,14 +136,22 @@ export class MemoryHotnessChartInfo extends ChartInfoTemplate<memoryHotnessChart
                 maxPageNumber = Math.max(maxPageNumber, pageNumber);
                 
             }
-            const sqrtAmount = Math.sqrt(maxPageNumber + 1);
+            const minAddress = this.pagesPerSuperPage * currentSuperPage;
+            let maxAddress;
+            if (currentSuperPage === this.highestSuperPage){
+                maxAddress = maxPageNumber;
+            } else {
+                maxAddress = this.pagesPerSuperPage * (currentSuperPage + 1) - 1;
+            }
+            const sqrtAmount = Math.sqrt(maxAddress - minAddress);
             const payload: memoryHotnessChartPayload = {
                 title: this.fileName,
                 chartData: chartData,
                 maxValue: maxValue,
                 xSize: Math.ceil(sqrtAmount),
                 ySize: Math.ceil(sqrtAmount),
-                maxAddress: maxPageNumber + 1,
+                minAddress: minAddress,
+                maxAddress: maxAddress,
                 prefix: 'Page: ',
                 dropdownSuffix: ' (Page)',
                 navigable: true
@@ -163,6 +179,7 @@ export class MemoryHotnessChartInfo extends ChartInfoTemplate<memoryHotnessChart
                 maxValue: pageInfo.maxAccessed,
                 xSize: 256,
                 ySize: 256,
+                minAddress: 0,
                 maxAddress: 65536,
                 prefix: 'Address: ',
                 dropdownSuffix: '',

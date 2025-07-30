@@ -154,7 +154,7 @@
                         cellPrefix = payload.prefix;
                         dropdownSuffix = payload.dropdownSuffix;
                         navigable = payload.navigable;
-                        updateChart(payload.title, payload.chartData, payload.maxValue, payload.xSize, payload.ySize, payload.maxAddress);
+                        updateChart(payload.title, payload.chartData, payload.maxValue, payload.xSize, payload.ySize, payload.minAddress, payload.maxAddress);
                         cachedOption = window.myChart.getOption();
                         break;
   
@@ -163,9 +163,9 @@
             };
             window.addEventListener('message', handleMessage);
 
-            function updateChart(title, chartData, maxValue, xSize, ySize, maxAddress){
+            function updateChart(title, chartData, maxValue, xSize, ySize, minAddress, maxAddress){
                 let data = [];
-                for (let i = 0; i < Math.min(ySize * xSize, maxAddress); i++){
+                for (let i = 0; i < Math.min(ySize * xSize, maxAddress + 1 - minAddress); i++){
                    data[i] = {name: i, value: [Math.floor(i / ySize), i % ySize, 0]};
                 }
 
